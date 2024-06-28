@@ -1,0 +1,16 @@
+NUM = @{ ASCII_NONZERO_DIGIT ~ (ASCII_DIGIT)* } // number
+MUL_OP = _{ "*"}
+POW_OP = _{ "^" }
+ADD_OP = @{ "+" | "-" }
+COEFF = { NUM ~ MUL_OP }
+POW = { POW_OP ~ NUM }
+TERM = { 
+    COEFF? ~ ASCII_ALPHA_LOWER ~ POW? 
+  | NUM
+}
+POLY = { TERM ~ (ADD_OP ~ TERM)* }
+
+// whitespaces & comments
+WHITESPACE = _{ " " | "\t" }
+
+MAIN = _{ SOI ~ POLY ~ EOI }
