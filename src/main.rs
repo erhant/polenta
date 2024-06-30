@@ -1,22 +1,38 @@
+use lambdaworks_math::{
+    field::{element::FieldElement, fields::u64_goldilocks_field::Goldilocks64Field},
+    polynomial::Polynomial,
+};
 use pest::Parser;
-use pest_derive::Parser;
+use polenta::grammar::{parse, parse_term, PolentaRule, TermSign};
 
-#[derive(Parser)]
-#[grammar = "./src/lang/grammar.pest"]
-pub struct PolentaParser;
-
-fn parse_expression(pair: pest::iterators::Pair<Rule>) {
-    let mut pairs = pair.into_inner();
-    let lhs = pairs.next().unwrap();
-    let op = pairs.next().unwrap();
-    let rhs = pairs.next().unwrap();
-    println!("lhs: {:?}, op: {:?}, rhs: {:?}", lhs.as_str(), op.as_str(), rhs.as_str());
-}
+type F = Goldilocks64Field;
 
 fn main() {
-    let mut example = PolentaParser::parse(Rule::MAIN, "2*x + 3*x^2 + 5").expect("parse");
+    const INPUT: &str = "2*x - 2*x + 5";
+    let mut program = parse(INPUT).expect("should parse");
 
-    parse_expression(example.next().unwrap());
+    let mut last_sign = TermSign::default();
+    let mut poly = Polynomial::<FieldElement<F>>::zero();
+    for poly_pair in program.next().unwrap().into_inner() {
+        match poly_pair.as_rule() {
+            PolentaRule::Term => {
+                let monomial = parse_term::<F>(poly_pair);
+                poly = poly
+                    + if last_sign == TermSign::Positive {
+                        monomial
+                    } else {
+                        -monomial
+                    };
+            }
+            PolentaRule::OpAdd => {
+                last_sign = TermSign::from(poly_pair.as_str());
+            }
+            _ => {
+                println!("{:?}", poly_pair);
+                unreachable!()
+            }
+        }
+    }
 
-
+    println!("Parsed polynomial: {:?}", poly);
 }

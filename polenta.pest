@@ -1,0 +1,32 @@
+/// A number, which is a sequence of digits.
+Uint = @{ ASCII_NONZERO_DIGIT ~ (ASCII_DIGIT)* }
+
+/// Multiplication operation, mostly used for coefficients.
+OpMul = _{ "*" }
+
+/// Power operation, used for exponents of polynomial terms.
+OpPow = _{ "^" }
+
+/// Addition and subtraction operations.
+OpAdd = @{ "+" | "-" }
+
+/// Coefficient of a term.
+Coefficient = { Uint ~ OpMul }
+
+/// Exponent of a term.
+Exponent = { OpPow ~ Uint }
+
+/// A term in a polynomial.
+Term = {
+    Coefficient? ~ ASCII_ALPHA_LOWER ~ Exponent?
+  | Uint
+}
+
+/// A polynomial expression.
+Poly = { Term ~ (OpAdd ~ Term)* }
+
+/* *************************************************************************** */
+WHITESPACE = _{ " " | "\t" }
+
+Main = _{ SOI ~ Poly ~ EOI }
+/* *************************************************************************** */
