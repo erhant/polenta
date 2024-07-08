@@ -1,11 +1,14 @@
 /// An atom is a primary with an optional unary minus.
-atom        = _{ unary_minus? ~ primary }
-unary_minus =  { "-" }
+atom = _{ unary_op? ~ primary }
+
+/// Unary operations
+unary_op = _{ minus }
+minus    =  { "-" }
 
 /// A primary is either an integer, an identifier, or an expression in parentheses.
 primary    = _{ integer | identifier | "(" ~ expr ~ ")" }
 integer    = @{ ASCII_DIGIT+ }
-identifier = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC)* }
+identifier = @{ !"let" ~ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC)* }
 
 /// Binary operations
 bin_op   = _{ add | subtract | multiply | divide | modulo | power }
@@ -16,12 +19,11 @@ divide   =  { "/" }
 modulo   =  { "%" }
 power    =  { "^" }
 
-/// An expression is a sequence of atoms, separated by binary operations.
-expr      = { atom ~ (bin_op ~ atom)* }
-let_expr  = { "let" ~ identifier ~ "=" ~ expr ~ ";" }
-let_exprs = { let_expr+ }
+expr          = { atom ~ (bin_op ~ atom)* }
+let_expr      = { "let" ~ identifier ~ "=" ~ expr ~ ";" }
+let_poly_expr = { "let" ~ identifier ~ "(" ~ identifier ~ ")" ~ "=" ~ expr ~ ";" }
 
 WHITESPACE = _{ " " | "\t" | NEWLINE }
 
-expr_main     = _{ SOI ~ expr ~ EOI }
-let_expr_main = _{ SOI ~ let_exprs ~ EOI }
+polenta_inner =  { let_poly_expr | let_expr | expr }
+polenta       = _{ SOI ~ polenta_inner+ ~ EOI }
