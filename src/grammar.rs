@@ -5,7 +5,7 @@ use pest::{iterators::Pair, pratt_parser::PrattParser};
 pub struct PolentaParser;
 
 #[derive(Debug)]
-pub enum Op {
+pub enum BinaryOp {
     Add,
     Subtract,
     Multiply,
@@ -15,17 +15,31 @@ pub enum Op {
 }
 
 #[derive(Debug)]
+pub enum UnaryOp {
+    Minus,
+}
+
+#[derive(Debug)]
 pub enum Expr {
     Identifier(String),
     Integer(u64),
-    UnaryMinus(Box<Expr>),
-    Let(String, Box<Expr>),
-    LetPoly(String, String, Box<Expr>),
-    BinOp {
-        lhs: Box<Expr>,
-        op: Op,
+    Eval(String, Box<Expr>),
+    UnaryOp {
+        op: UnaryOp,
         rhs: Box<Expr>,
     },
+    BinaryOp {
+        lhs: Box<Expr>,
+        op: BinaryOp,
+        rhs: Box<Expr>,
+    },
+}
+
+#[derive(Debug)]
+pub enum Stmt {
+    Expr(Expr),
+    Let(String, Expr),
+    LetPoly(String, String, Expr),
 }
 
 // Pratt parser for expressions with operator precedence.
@@ -45,48 +59,42 @@ lazy_static::lazy_static! {
     };
 }
 
-/// Parse an expression. There are 3 types:
-///
-/// - Plain mathematical operation such as `4 * 2 + 1`
-/// - Let expression `let x = 4 * 2 + 1;`
-/// - Let poly expression `let P(x) = 4*x^2 + x + 1;`
-///
-/// When the expression is that of a poly, the `term` parameter is used to determine the term of the poly (e.g. `x`).
-pub fn parse_expr(pair: Pair<Rule>, term: Option<&String>) -> Expr {
+/// Parse an expression.
+fn parse_expr(pair: Pair<Rule>) -> Expr {
     assert_eq!(pair.as_rule(), Rule::expr);
     let pairs = pair.into_inner();
 
     EXPR_PRATT_PARSER
         .map_primary(|primary| match primary.as_rule() {
             Rule::integer => Expr::Integer(primary.as_str().parse::<u64>().unwrap()),
-            Rule::expr => parse_expr(primary, term),
+            Rule::expr => parse_expr(primary),
             Rule::identifier => Expr::Identifier(primary.as_str().to_string()),
             _rule => unreachable!("Expr::parse expected atom, found {:?}", _rule),
         })
-        .map_infix(|lhs, op, rhs| {
-            let op = match op.as_rule() {
-                Rule::add => Op::Add,
-                Rule::subtract => Op::Subtract,
-                Rule::multiply => Op::Multiply,
-                Rule::divide => Op::Divide,
-                Rule::modulo => Op::Modulo,
-                Rule::power => Op::Power,
+        .map_infix(|lhs, op, rhs| Expr::BinaryOp {
+            lhs: Box::new(lhs),
+            op: match op.as_rule() {
+                Rule::add => BinaryOp::Add,
+                Rule::subtract => BinaryOp::Subtract,
+                Rule::multiply => BinaryOp::Multiply,
+                Rule::divide => BinaryOp::Divide,
+                Rule::modulo => BinaryOp::Modulo,
+                Rule::power => BinaryOp::Power,
                 _rule => unreachable!("Expr::parse expected infix operation, found {:?}", _rule),
-            };
-            Expr::BinOp {
-                lhs: Box::new(lhs),
-                op,
-                rhs: Box::new(rhs),
-            }
+            },
+            rhs: Box::new(rhs),
         })
-        .map_prefix(|op, rhs| match op.as_rule() {
-            Rule::minus => Expr::UnaryMinus(Box::new(rhs)),
-            _ => unreachable!(),
+        .map_prefix(|op, rhs| Expr::UnaryOp {
+            op: match op.as_rule() {
+                Rule::minus => UnaryOp::Minus,
+                _rule => unreachable!("Expr::parse expected prefix operation, found {:?}", _rule),
+            },
+            rhs: Box::new(rhs),
         })
         .parse(pairs)
 }
 
-pub fn parse_let_expr(pair: Pair<Rule>) -> Expr {
+fn parse_let_expr(pair: Pair<Rule>) -> Stmt {
     assert_eq!(pair.as_rule(), Rule::let_expr);
     let mut pairs = pair.into_inner();
 
@@ -100,13 +108,13 @@ pub fn parse_let_expr(pair: Pair<Rule>) -> Expr {
     //                    ^^^^^^
     let pair = pairs.next().unwrap();
     assert_eq!(pair.as_rule(), Rule::expr);
-    let expr = parse_expr(pair, None);
+    let expr = parse_expr(pair);
 
     assert!(pairs.next().is_none());
-    Expr::Let(identifier, Box::new(expr))
+    Stmt::Let(identifier, expr)
 }
 
-pub fn parse_let_poly_expr(pair: Pair<Rule>) -> Expr {
+fn parse_let_poly_expr(pair: Pair<Rule>) -> Stmt {
     assert_eq!(pair.as_rule(), Rule::let_poly_expr);
     let mut pairs = pair.into_inner();
 
@@ -126,16 +134,16 @@ pub fn parse_let_poly_expr(pair: Pair<Rule>) -> Expr {
     //                                     ^^^^^^
     let pair = pairs.next().unwrap();
     assert_eq!(pair.as_rule(), Rule::expr);
-    let expr = parse_expr(pair, Some(&term));
+    let expr = parse_expr(pair);
 
     assert!(pairs.next().is_none());
-    Expr::LetPoly(identifier, term, Box::new(expr))
+    Stmt::LetPoly(identifier, term, expr)
 }
 
-pub fn parse_polenta(pair: Pair<Rule>) -> Vec<Expr> {
+pub fn parse_polenta(pair: Pair<Rule>) -> Vec<Stmt> {
     pair.into_inner()
         .map(|pair| match pair.as_rule() {
-            Rule::expr => parse_expr(pair, None),
+            Rule::expr => Stmt::Expr(parse_expr(pair)),
             Rule::let_expr => parse_let_expr(pair),
             Rule::let_poly_expr => parse_let_poly_expr(pair),
             _rule => unreachable!("E, found {:?}", _rule),
@@ -149,10 +157,12 @@ mod tests {
     use pest::Parser;
 
     fn parse(expression: &str) -> Result<(), String> {
-        let mut pairs = PolentaParser::parse(Rule::polenta, expression)
+        let pairs = PolentaParser::parse(Rule::polenta, expression)
             .map_err(|e| format!("Parse failed: {:?}", e))?;
 
-        println!("Parsed: {:#?}", parse_polenta(pairs.next().unwrap()));
+        for pair in pairs {
+            println!("Parsed: {:#?}", parse_polenta(pair));
+        }
 
         Ok(())
     }
@@ -165,6 +175,11 @@ mod tests {
     #[test]
     fn test_let_expr() {
         parse("let a = -1 + 3 * 3;").expect("should parse");
+    }
+
+    #[test]
+    fn test_multi_let_expr() {
+        parse("let a = -1 + 2; let b = 3 * 4;").expect("should parse");
     }
 
     #[test]
