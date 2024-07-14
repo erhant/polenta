@@ -1,29 +1,34 @@
+/// Ignored
+WHITESPACE = _{ " " | "\t" | NEWLINE }
+
+/// Atomics
 integer    = @{ ASCII_DIGIT+ }
 identifier = @{ !"let" ~ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC)* }
-
-atom    = _{ unary_op? ~ primary }
-primary = _{ identifier ~ "{" ~ expr ~ "}" | "(" ~ expr ~ ")" | integer | identifier }
 
 /// Unary operations
 unary_op = _{ minus }
 minus    =  { "-" }
 
 /// Binary operations
-bin_op   = _{ add | subtract | multiply | divide | modulo | power }
+bin_op   = _{ add | subtract | multiply | divide | modulo | power | eval }
 add      =  { "+" }
 subtract =  { "-" }
 multiply =  { "*" }
 divide   =  { "/" }
 modulo   =  { "%" }
 power    =  { "^" }
+eval     =  { "@" }
 
-// TODO: these should be statements
+/// Expression
+expr    =  { atom ~ (bin_op ~ atom)* }
+atom    = _{ unary_op? ~ primary }
+primary = _{ integer | identifier | "(" ~ expr ~ ")" }
 
-expr          = { atom ~ (bin_op ~ atom)* }
-let_expr      = { "let" ~ identifier ~ "=" ~ expr ~ ";" }
-let_poly_expr = { "let" ~ identifier ~ "(" ~ identifier ~ ")" ~ "=" ~ expr ~ ";" }
+/// Statements
+polenta_stmts = { let_poly_stmt | let_stmt | expr_stmt }
+expr_stmt     = { expr ~ ";" }
+let_stmt      = { "let" ~ identifier ~ "=" ~ expr ~ ";" }
+let_poly_stmt = { "let" ~ identifier ~ "(" ~ identifier ~ ")" ~ "=" ~ expr ~ ";" }
 
-WHITESPACE = _{ " " | "\t" | NEWLINE }
-
-polenta_inner =  { let_poly_expr | let_expr | expr }
-polenta       = _{ SOI ~ polenta_inner+ ~ EOI }
+/// Main rule
+polenta = _{ SOI ~ polenta_stmts+ ~ EOI }
