@@ -1,5 +1,6 @@
-/// Ignored
+/// Ignore
 WHITESPACE = _{ " " | "\t" | NEWLINE }
+COMMENT    = _{ "//" ~ (!"\n" ~ ANY)* }
 
 /// Atomics
 integer    = @{ ASCII_DIGIT+ }

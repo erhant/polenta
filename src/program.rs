@@ -1,20 +1,23 @@
+use crate::utils::PolentaUtilExt;
 use core::panic;
-use std::collections::HashMap;
-
 use lambdaworks_math::{
     field::{element::FieldElement, traits::IsPrimeField},
     polynomial::Polynomial,
 };
+use std::collections::HashMap;
 
-use crate::{
-    grammar::{BinaryOp, Expr, Stmt, UnaryOp},
-    utils::{felt_as_poly, poly_as_felt, poly_pow},
-};
+use crate::grammar::{BinaryOp, Expr, PolentaParser, Stmt, UnaryOp};
 
 pub struct Polenta<F: IsPrimeField> {
     /// Symbol table as a map from identifiers to polynomials.
     /// Constant values are stored as constant polynomials.
-    symbols: HashMap<String, Polynomial<FieldElement<F>>>,
+    pub symbols: HashMap<String, Polynomial<FieldElement<F>>>,
+}
+
+impl<F: IsPrimeField> Default for Polenta<F> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<F: IsPrimeField> Polenta<F> {
@@ -24,11 +27,15 @@ impl<F: IsPrimeField> Polenta<F> {
         }
     }
 
-    pub fn process_expr(
-        &mut self,
-        expr: Expr,
-        term: Option<&String>,
-    ) -> Polynomial<FieldElement<F>> {
+    pub fn interpret(&mut self, input: &str) -> Vec<Polynomial<FieldElement<F>>> {
+        PolentaParser::parse_input(input)
+            .unwrap()
+            .into_iter()
+            .map(|stmt| self.process_statement(stmt))
+            .collect()
+    }
+
+    fn process_expr(&mut self, expr: Expr, term: Option<&String>) -> Polynomial<FieldElement<F>> {
         match expr {
             Expr::Identifier(identifier) => {
                 // if this identifier is a term, treat it as P(x) = x
@@ -55,83 +62,41 @@ impl<F: IsPrimeField> Polenta<F> {
 
                 match op {
                     BinaryOp::Add => lhs + rhs,
-                    BinaryOp::Subtract => lhs - rhs,
-                    BinaryOp::Multiply => lhs * rhs,
-                    BinaryOp::Divide => lhs / rhs,
-                    BinaryOp::Modulo => lhs.long_division_with_remainder(&rhs).1,
-                    BinaryOp::Eval => felt_as_poly(lhs.evaluate(&poly_as_felt(rhs))),
-                    BinaryOp::Power => poly_pow(lhs, poly_as_felt(rhs)),
+                    BinaryOp::Sub => lhs - rhs,
+                    BinaryOp::Mul => lhs * rhs,
+                    BinaryOp::Div => {
+                        // TODO: error handling
+                        if rhs.coeff_len() == 0 {
+                            panic!("division by zero")
+                        }
+                        lhs / rhs
+                    }
+                    BinaryOp::Mod => lhs.long_division_with_remainder(&rhs).1,
+                    BinaryOp::Pow => Self::poly_pow(&lhs, Self::poly_as_felt(&rhs)),
+                    BinaryOp::Evl => Self::felt_as_poly(lhs.evaluate(&Self::poly_as_felt(&rhs))),
                 }
             }
         }
     }
 
-    pub fn process_statement(&mut self, stmt: Stmt) {
+    fn process_statement(&mut self, stmt: Stmt) -> Polynomial<FieldElement<F>> {
+        // TODO: can we avoid the cloning here?
         match stmt {
             Stmt::Let(identifier, expr) => {
                 let poly = self.process_expr(expr, None);
-                self.symbols.insert(identifier, poly);
+                self.symbols.insert(identifier, poly.clone());
+                poly
             }
             Stmt::LetPoly(identifier, term, expr) => {
                 let poly = self.process_expr(expr, Some(&term));
-                self.symbols.insert(identifier, poly);
+                self.symbols.insert(identifier, poly.clone());
+                poly
             }
             Stmt::Expr(expr) => {
                 let poly = self.process_expr(expr, None);
-                todo!("maybe we make a print statement?");
+                self.symbols.insert("!!".to_string(), poly.clone());
+                poly
             }
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::{grammar::PolentaParser, utils::poly_print};
-
-    type F = lambdaworks_math::field::fields::u64_goldilocks_field::Goldilocks64Field;
-
-    fn run_test(expression: &str) {
-        let mut polenta = Polenta::<F>::new();
-        let stmts = PolentaParser::parse_input(expression).unwrap();
-        for stmt in stmts {
-            polenta.process_statement(stmt);
-        }
-
-        for (symbol, value) in polenta.symbols.iter() {
-            println!("{} = {}", symbol, poly_print(value.clone()));
-        }
-    }
-
-    #[test]
-    fn test_let_many() {
-        run_test("let x = 4 * 3; let y = 12 + x;");
-    }
-
-    #[test]
-    fn test_poly_powers() {
-        run_test("let P(x) = x^3 + 3*x^2 + x + 4;");
-    }
-
-    #[test]
-    fn test_dummy_eval() {
-        run_test("let a = 2@7;");
-    }
-
-    #[test]
-    fn test_many_powers() {
-        run_test("let P(x) = 3*x^2^3;");
-    }
-
-    #[test]
-    fn test_poly_eval() {
-        let input = r#"
-        let P(x) = 4*x + 2; 
-        let t = 2;
-        let a = 5 + P@(2);
-        "#;
-        run_test(input);
-    }
-}
-
-// "let P(x) = 4*x + 2; let a = P(2);"

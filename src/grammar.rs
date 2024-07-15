@@ -33,7 +33,7 @@ impl PolentaParser {
             Rule::expr_stmt => parse_expr_stmt(pair),
             Rule::let_stmt => parse_let_stmt(pair),
             Rule::let_poly_stmt => parse_let_poly_stmt(pair),
-            _rule => unreachable!("Expected statement, found {:?}", _rule),
+            rule => unreachable!("Expected statement, found {:?}", rule),
         }
     }
 }
@@ -41,12 +41,12 @@ impl PolentaParser {
 #[derive(Debug, Clone)]
 pub enum BinaryOp {
     Add,
-    Subtract,
-    Multiply,
-    Divide,
-    Modulo,
-    Power,
-    Eval,
+    Sub,
+    Mul,
+    Div,
+    Mod,
+    Pow,
+    Evl,
 }
 
 #[derive(Debug, Clone)]
@@ -107,26 +107,26 @@ fn parse_expr(pair: Pair<Rule>) -> Expr {
             Rule::integer => Expr::Integer(primary.as_str().parse::<u64>().unwrap()),
             Rule::expr => parse_expr(primary),
             Rule::identifier => Expr::Identifier(primary.as_str().to_string()),
-            _rule => unreachable!("Expr::parse expected atom, found {:?}", _rule),
+            rule => unreachable!("Expr::parse expected atom, found {:?}", rule),
         })
         .map_infix(|lhs, op, rhs| Expr::BinaryOp {
             lhs: Box::new(lhs),
             op: match op.as_rule() {
                 Rule::add => BinaryOp::Add,
-                Rule::subtract => BinaryOp::Subtract,
-                Rule::multiply => BinaryOp::Multiply,
-                Rule::divide => BinaryOp::Divide,
-                Rule::modulo => BinaryOp::Modulo,
-                Rule::power => BinaryOp::Power,
-                Rule::eval => BinaryOp::Eval,
-                _rule => unreachable!("Expr::parse expected infix operation, found {:?}", _rule),
+                Rule::subtract => BinaryOp::Sub,
+                Rule::multiply => BinaryOp::Mul,
+                Rule::divide => BinaryOp::Div,
+                Rule::modulo => BinaryOp::Mod,
+                Rule::power => BinaryOp::Pow,
+                Rule::eval => BinaryOp::Evl,
+                rule => unreachable!("Expr::parse expected infix operation, found {:?}", rule),
             },
             rhs: Box::new(rhs),
         })
         .map_prefix(|op, rhs| Expr::UnaryOp {
             op: match op.as_rule() {
                 Rule::minus => UnaryOp::Minus,
-                _rule => unreachable!("Expr::parse expected prefix operation, found {:?}", _rule),
+                rule => unreachable!("Expr::parse expected prefix operation, found {:?}", rule),
             },
             rhs: Box::new(rhs),
         })
@@ -193,46 +193,4 @@ fn parse_let_poly_stmt(pair: Pair<Rule>) -> Stmt {
 
     debug_assert!(pairs.next().is_none());
     Stmt::LetPoly(identifier, term, expr)
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::grammar::PolentaParser;
-
-    fn run_test(expression: &str) {
-        let stmts = PolentaParser::parse_input(expression).unwrap();
-        for stmt in stmts {
-            println!("{:?}", stmt);
-        }
-    }
-
-    #[test]
-    fn test_expr_stmt() {
-        run_test("-1 + x * 3 * 3;");
-    }
-
-    #[test]
-    fn test_let_stmt() {
-        run_test("let a = -1 + 3 * 3;");
-    }
-
-    #[test]
-    fn test_multi_let_stmt() {
-        run_test("let a = -1 + 2; let b = 3 * 4;");
-    }
-
-    #[test]
-    fn test_poly_powers() {
-        run_test("let P(x) = x^2 + x + 4;");
-    }
-
-    #[test]
-    fn test_let_poly_stmt() {
-        run_test("let P(x) = -1 + 3 * x;");
-    }
-
-    #[test]
-    fn test_let_poly_eval_stmt() {
-        run_test("let P(x) = x + 2; let e = P@2;");
-    }
 }

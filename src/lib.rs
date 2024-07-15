@@ -1,3 +1,6 @@
-pub mod grammar;
-pub mod program;
-pub mod utils;
+mod grammar;
+mod program;
+mod utils;
+
+pub use program::Polenta;
+pub use utils::PolentaUtilExt;
