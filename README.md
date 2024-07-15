@@ -11,12 +11,14 @@ In this section we go over what can be done with Polenta. All code snippets belo
 You can use Polenta as a calculator-over-field.
 
 ```rs
-10 - 2^3 * 2
+10 - 2^3 * 2;
 ```
 
-> [!NOTE]
->
-> The value of last evaluated expression statement is stored at `!!` symbol.
+However, you should keep in mind that all operations are defined over the field, so division might not always work as you expect:
+
+```rs
+1 / 2; // some number x such that 2*x = 1, not 0.5!
+```
 
 ### Creating a Polynomial
 
@@ -37,7 +39,7 @@ let Q(x) = 5*x - 5*x + 1; // 1
 >
 > Polenta supports single line comments, as shown above.
 
-You can also multiply polynomials like:
+You can also multiply polynomials:
 
 ```rs
 let P(x) = (x + 1)*(x + 2)*(x + 4); // x^3 + 7*x^2 + 14*x + 8
@@ -50,11 +52,19 @@ let P(x) = 3*x;
 let Q(x) = P^2 + 2*P; // (3*x)^2 + 2*(3*x) = 9*x^2 + 6*x
 ```
 
-Polenta allows shadowing to overwrite existing polynomials:
+Shadowing is allowed:
 
 ```rs
-let P = 3*x;
-let P = 3*P + 5; // 9*x + 5
+let P(x) = 3*x;
+let P(x) = 3*P + 5; // 9*x + 5
+```
+
+You can use an identifier within a polynomial, but if the identifier has the same name as the term, it will be ignored.
+
+```rs
+let t = 2;
+let x = 5;
+let P(x) = x^t + 2*x; // x^2 + 2*x
 ```
 
 ### Evaluating A Polynomial
@@ -64,18 +74,13 @@ Evaluation is achieved using a binary operation `@`, so that `P@2` means "evalua
 ```rs
 let P(x) = 3*x;
 let z = P@3; // 9
-```
-
-We can later use these values if we would like:
-
-```rs
 let Q(x) = x^z - z*x; // x^9 - 9*x
 ```
 
 Remember that everything is a polynomial in Polenta, so you could evaluate a number as well. Evaluation will not have an effect because a number is treated as a constant polynomial.
 
 ```rs
-4@2 // 4
+4@2; // 4
 ```
 
 Since evaluation is a binary operation, you can chain them together:

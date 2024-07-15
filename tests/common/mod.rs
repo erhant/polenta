@@ -7,7 +7,7 @@ pub fn run_test(input: &str) -> HashMap<String, String> {
     type F = lambdaworks_math::field::fields::u64_goldilocks_field::Goldilocks64Field;
 
     let mut polenta = Polenta::<F>::new();
-    polenta.interpret(input); // ignore returned values, just check symbols
+    polenta.interpret(input).unwrap(); // ignore returned values, just check symbols
     polenta
         .symbols
         .into_iter()
