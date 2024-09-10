@@ -13,14 +13,9 @@ impl PolentaParser {
         let stmts = pairs
             .into_iter()
             .filter_map(|pair| match pair.as_rule() {
-                Rule::EOI => {
-                    // TODO: log
-                    None
-                }
-                rule => {
-                    assert_eq!(rule, Rule::polenta_stmts);
-                    Some(Self::parse_statement(pair.into_inner().next().unwrap()))
-                }
+                Rule::EOI => None,
+                Rule::polenta_stmts => Some(Self::parse_statement(pair)),
+                _ => unreachable!(),
             })
             .collect();
 
@@ -29,11 +24,16 @@ impl PolentaParser {
 
     /// Parses a given pair into a statement.
     pub fn parse_statement(pair: Pair<Rule>) -> Stmt {
+        assert_eq!(pair.as_rule(), Rule::polenta_stmts);
+
+        let pair = pair.into_inner().next().unwrap();
+        println!("Span: {:?}", pair.as_span());
         match pair.as_rule() {
             Rule::expr_stmt => parse_expr_stmt(pair),
             Rule::let_stmt => parse_let_stmt(pair),
             Rule::let_poly_stmt => parse_let_poly_stmt(pair),
-            rule => unreachable!("Expected statement, found {:?}", rule),
+            Rule::assert_stmt => parse_assert_stmt(pair),
+            _ => unreachable!(),
         }
     }
 }
@@ -74,6 +74,7 @@ pub enum Stmt {
     Expr(Expr),
     Let(String, Expr),
     LetPoly(String, String, Expr),
+    Assert(Expr, Expr),
 }
 
 // Pratt parser for expressions with operator precedence.
@@ -133,19 +134,37 @@ fn parse_expr(pair: Pair<Rule>) -> Expr {
         .parse(pairs)
 }
 
-// TODO: parse Stmt
+fn parse_assert_stmt(pair: Pair<Rule>) -> Stmt {
+    debug_assert_eq!(pair.as_rule(), Rule::assert_stmt);
+    let mut pairs = pair.into_inner();
+
+    // assert <expr> = <expr> ;
+    //        ^^^^
+    let pair = pairs.next().unwrap();
+    debug_assert_eq!(pair.as_rule(), Rule::expr);
+    let l_expr = parse_expr(pair);
+
+    // assert <expr> = <expr> ;
+    //               ^^^^
+    let pair = pairs.next().unwrap();
+    debug_assert_eq!(pair.as_rule(), Rule::expr);
+    let r_expr = parse_expr(pair);
+
+    debug_assert!(pairs.next().is_none());
+    Stmt::Assert(l_expr, r_expr)
+}
 
 fn parse_expr_stmt(pair: Pair<Rule>) -> Stmt {
-    assert_eq!(pair.as_rule(), Rule::expr_stmt);
+    debug_assert_eq!(pair.as_rule(), Rule::expr_stmt);
     let mut pairs = pair.into_inner();
 
     // expr ;
     // ^^^^
     let pair = pairs.next().unwrap();
-    assert_eq!(pair.as_rule(), Rule::expr);
+    debug_assert_eq!(pair.as_rule(), Rule::expr);
     let expr = parse_expr(pair);
 
-    assert!(pairs.next().is_none());
+    debug_assert!(pairs.next().is_none());
     Stmt::Expr(expr)
 }
 

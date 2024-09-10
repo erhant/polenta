@@ -26,10 +26,11 @@ atom    = _{ unary_op? ~ primary }
 primary = _{ integer | identifier | "(" ~ expr ~ ")" }
 
 /// Statements
-polenta_stmts = { let_poly_stmt | let_stmt | expr_stmt }
+polenta_stmts = { let_poly_stmt | let_stmt | expr_stmt | assert_stmt }
 expr_stmt     = { expr ~ ";" }
 let_stmt      = { "let" ~ identifier ~ "=" ~ expr ~ ";" }
 let_poly_stmt = { "let" ~ identifier ~ "(" ~ identifier ~ ")" ~ "=" ~ expr ~ ";" }
+assert_stmt   = { "assert" ~ expr ~ "=" ~ expr }
 
 /// Main rule
 polenta = _{ SOI ~ polenta_stmts+ ~ EOI }
