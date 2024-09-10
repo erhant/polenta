@@ -1,4 +1,4 @@
-mod common;
+pub mod common;
 use common::run_test_for_symbols;
 
 #[test]

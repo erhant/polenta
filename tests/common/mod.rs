@@ -1,11 +1,23 @@
+//! Common utilities for tests only.
+//!
+//! Note that all test files should import this with `pub` visibility,
+//! otherwise you get `dead_code` warnings.
+//!
+//! Relevant info: https://stackoverflow.com/a/67902444
+
 use std::collections::HashMap;
 
-use polenta::{Polenta, PolentaUtilExt};
+use polenta::{InterpreterError, Polenta, PolentaUtilExt};
+type F = lambdaworks_math::field::fields::u64_goldilocks_field::Goldilocks64Field;
+
+pub fn run_test_for_error(input: &str) -> InterpreterError {
+    let result = Polenta::<F>::new().interpret(input);
+    assert!(result.is_err());
+    return result.err().unwrap();
+}
 
 /// Runs tests over the Goldilocks field (no particular reason for the field choice).
 pub fn run_test(input: &str) -> HashMap<String, String> {
-    type F = lambdaworks_math::field::fields::u64_goldilocks_field::Goldilocks64Field;
-
     let mut polenta = Polenta::<F>::new();
     polenta.interpret(input).unwrap(); // ignore returned values, just check symbols
     polenta

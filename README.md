@@ -4,7 +4,11 @@ Polenta is a polynomial arithmetic language, and **everything** is a polynomial.
 
 ## Usage
 
-In this section we go over what can be done with Polenta. All code snippets below are valid Polenta code.
+In this section we go over what can be done with Polenta.
+
+> [!TIP]
+>
+> All code snippets below are valid Polenta code.
 
 ### Statements
 
@@ -67,7 +71,7 @@ let x = 5;
 let P(x) = x^t + 2*x; // x^2 + 2*x
 ```
 
-### Evaluating A Polynomial
+### Evaluating a Polynomial
 
 Evaluation is achieved using a binary operation `@`, so that `P@2` means "evaluate polynomial `P` at point `2`.
 
