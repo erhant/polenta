@@ -1,4 +1,7 @@
-use crate::{errors::InterpreterError, utils::PolentaUtilExt};
+use crate::{
+    errors::{pest_error_to_miette_error, InterpreterError, PolentaError},
+    utils::PolentaUtilExt,
+};
 use lambdaworks_math::{
     field::{element::FieldElement, traits::IsPrimeField},
     polynomial::Polynomial,
@@ -29,12 +32,20 @@ impl<F: IsPrimeField> Polenta<F> {
     pub fn interpret(
         &mut self,
         input: &str,
-    ) -> Result<Vec<Polynomial<FieldElement<F>>>, InterpreterError> {
-        PolentaParser::parse_input(input)
-            .unwrap()
-            .into_iter()
-            .map(|stmt| self.process_statement(stmt))
-            .collect()
+    ) -> Result<Vec<Polynomial<FieldElement<F>>>, PolentaError> {
+        match PolentaParser::parse_input(input) {
+            Ok(stmts) => stmts
+                .into_iter()
+                .map(|stmt| self.process_statement(stmt).map_err(|e| e.into()))
+                .collect(),
+            Err(e) => {
+                println!("Error: {:?}", e);
+                // println!("Miette Error: {:?}", );
+                // FIXME: handle error here
+                // map https://docs.rs/pest/latest/pest/error/struct.Error.html to Miette error?
+                Err(pest_error_to_miette_error(input, e).into())
+            }
+        }
     }
 
     fn process_expr(
