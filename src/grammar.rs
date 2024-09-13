@@ -27,7 +27,6 @@ impl PolentaParser {
         assert_eq!(pair.as_rule(), Rule::polenta_stmts);
 
         let pair = pair.into_inner().next().unwrap();
-        println!("Span: {:?}", pair.as_span());
         match pair.as_rule() {
             Rule::expr_stmt => parse_expr_stmt(pair),
             Rule::let_stmt => parse_let_stmt(pair),
@@ -134,6 +133,13 @@ fn parse_expr(pair: Pair<Rule>) -> Expr {
         .parse(pairs)
 }
 
+/// Parses an assert statement.
+///
+/// ### Example
+///
+/// ```rs
+/// assert <expr> = <expr> ;
+/// ```
 fn parse_assert_stmt(pair: Pair<Rule>) -> Stmt {
     debug_assert_eq!(pair.as_rule(), Rule::assert_stmt);
     let mut pairs = pair.into_inner();

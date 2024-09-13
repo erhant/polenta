@@ -8,3 +8,9 @@ fn test_poly_powers() {
     let err = run_test_for_error("let a = b;");
     println!("{:?}", err);
 }
+
+#[test]
+fn test_syntax_error() {
+    let err = run_test_for_error("let a = ++;");
+    println!("{:?}", err);
+}
