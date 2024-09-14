@@ -33,19 +33,12 @@ impl<F: IsPrimeField> Polenta<F> {
         &mut self,
         input: &str,
     ) -> Result<Vec<Polynomial<FieldElement<F>>>, PolentaError> {
-        match PolentaParser::parse_input(input) {
-            Ok(stmts) => stmts
-                .into_iter()
-                .map(|stmt| self.process_statement(stmt).map_err(|e| e.into()))
-                .collect(),
-            Err(e) => {
-                println!("Error: {:?}", e);
-                // println!("Miette Error: {:?}", );
-                // FIXME: handle error here
-                // map https://docs.rs/pest/latest/pest/error/struct.Error.html to Miette error?
-                Err(pest_error_to_miette_error(input, e).into())
-            }
-        }
+        let stmts = PolentaParser::parse_input(input.trim()).map_err(pest_error_to_miette_error)?;
+
+        stmts
+            .into_iter()
+            .map(|stmt| self.process_statement(stmt).map_err(|e| e.into()))
+            .collect()
     }
 
     fn process_expr(
@@ -101,8 +94,6 @@ impl<F: IsPrimeField> Polenta<F> {
         }
     }
 
-    /// TODO: !!!
-    ///
     /// The value of last evaluated "expression statement" is stored at `!!` symbol for internal testing.
     fn process_statement(
         &mut self,

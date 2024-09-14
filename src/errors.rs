@@ -1,9 +1,10 @@
 use miette::{Diagnostic, NamedSource, SourceSpan};
-use pest::{error::Error, iterators::Pair};
+use pest::error::{Error, ErrorVariant};
 use thiserror::Error;
 
 use crate::grammar::Rule;
 
+/// A [miette](https://crates.io/crates/miette#-in-libraries) diagnostic for Polenta errors.
 #[derive(Error, Diagnostic, Debug)]
 pub enum PolentaError {
     #[error(transparent)]
@@ -16,36 +17,6 @@ pub enum PolentaError {
 }
 
 #[derive(Error, Debug, Diagnostic)]
-#[error("Compiler error")]
-#[diagnostic(code(oops::my::bad))]
-pub struct ParserError {
-    // The Source that we're gonna be printing snippets out of.
-    // This can be a String if you don't have or care about file names.
-    #[source_code]
-    src: NamedSource<String>,
-    // Snippets and highlights can be included in the diagnostic!
-    #[label("This bit here")]
-    bad_bit: SourceSpan,
-    #[help]
-    help: String,
-}
-
-pub fn pest_error_to_miette_error(source: &str, err: Error<Rule>) -> ParserError {
-    let (location, length) = match err.location {
-        pest::error::InputLocation::Pos(pos) => (pos, 1),
-        pest::error::InputLocation::Span((location, length)) => (location, length),
-    };
-
-    let miette_error = ParserError {
-        src: NamedSource::new("input", source.to_string()).with_language("Rust"),
-        bad_bit: SourceSpan::new(location.into(), length),
-        help: "This is a label".to_string(),
-    };
-    miette_error
-}
-
-#[derive(Error, Debug, Diagnostic)]
-#[diagnostic()]
 pub enum InterpreterError {
     #[help("try doing it better next time?")]
     #[error("Unknown Identifier: {0}")]
@@ -56,4 +27,45 @@ pub enum InterpreterError {
     #[help("dont do it")]
     #[error("Assertion Failed")]
     AssertionFailed,
+}
+
+#[derive(Error, Debug, Diagnostic)]
+#[error("Compiler Error")]
+// #[diagnostic(code(oops::my::bad))]
+pub struct ParserError {
+    // The Source that we're gonna be printing snippets out of.
+    // This can be a String if you don't have or care about file names.
+    #[source_code]
+    src: NamedSource<String>,
+    // Snippets and highlights can be included in the diagnostic!
+    #[label]
+    problem: SourceSpan,
+    #[help]
+    help: String,
+}
+
+pub fn pest_error_to_miette_error(err: Error<Rule>) -> ParserError {
+    let (start, length) = match err.line_col {
+        pest::error::LineColLocation::Pos((_, col)) => (col - 1, 1),
+        pest::error::LineColLocation::Span((_, col_s), (_, col_e)) => {
+            (col_s - 1, col_e - col_s + 1)
+        }
+    };
+
+    let help = match &err.variant {
+        ErrorVariant::CustomError { message } => message.into(),
+        ErrorVariant::ParsingError {
+            positives,
+            negatives,
+        } => {
+            format!("Expected one of {:?}, got {:?}", positives, negatives)
+        }
+    };
+
+    let miette_error = ParserError {
+        src: NamedSource::new("input", err.line().to_string()).with_language("Rust"),
+        problem: SourceSpan::new(start.into(), length),
+        help: help,
+    };
+    miette_error
 }

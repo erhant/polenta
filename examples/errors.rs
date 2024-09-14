@@ -2,10 +2,13 @@ use polenta::Polenta;
 type F = lambdaworks_math::field::fields::u64_goldilocks_field::Goldilocks64Field;
 
 fn main() -> miette::Result<()> {
-    let input = "let 3 = /++++x;";
+    let input = r#"
+        let a = 5; 
+        let b = a + 2^^2;
+    "#;
 
-    Polenta::<F>::new().interpret(input)?;
-    // println!("{:?}", err);
+    let err = Polenta::<F>::new().interpret(input).unwrap_err();
+    println!("{}", err);
 
     Ok(())
 }

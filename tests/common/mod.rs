@@ -7,10 +7,10 @@
 
 use std::collections::HashMap;
 
-use polenta::{InterpreterError, Polenta, PolentaUtilExt};
+use polenta::{Polenta, PolentaError, PolentaUtilExt};
 type F = lambdaworks_math::field::fields::u64_goldilocks_field::Goldilocks64Field;
 
-pub fn run_test_for_error(input: &str) -> InterpreterError {
+pub fn run_test_for_error(input: &str) -> PolentaError {
     let result = Polenta::<F>::new().interpret(input);
     assert!(result.is_err());
     return result.err().unwrap();
