@@ -21,7 +21,8 @@ pub trait PolentaUtilExt<F: IsField> {
 impl<F: IsPrimeField> PolentaUtilExt<F> for Polenta<F> {
     /// Treats the given constants polynomial as a field element.
     fn poly_as_felt(poly: &Polynomial<FieldElement<F>>) -> FieldElement<F> {
-        assert!(poly.coeff_len() == 1, "Expected a constant polynomial."); // TODO: return error
+        // zero poly has len 0, and constant polys have len 1
+        assert!(poly.coeff_len() <= 1, "Expected a constant polynomial."); // TODO: return error
         poly.leading_coefficient()
     }
 

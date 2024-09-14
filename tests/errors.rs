@@ -18,5 +18,5 @@ fn test_div_by_zero() {
 #[test]
 fn test_syntax_error() {
     let err = run_test_for_error("let a = ++;");
-    assert_eq!("Compiler Error".to_string(), err.to_string());
+    assert_eq!("Syntax Error".to_string(), err.to_string());
 }

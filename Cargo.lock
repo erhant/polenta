@@ -389,24 +389,14 @@ dependencies = [
 name = "polenta"
 version = "0.1.0"
 dependencies = [
+ "colored",
  "lambdaworks-math",
  "lazy_static",
  "miette",
  "pest",
  "pest_derive",
- "supports-color",
- "thiserror",
-]
-
-[[package]]
-name = "polenta-cli"
-version = "0.1.0"
-dependencies = [
- "colored",
- "lambdaworks-math",
- "miette",
- "polenta",
  "rustyline",
+ "supports-color",
  "thiserror",
 ]
 
@@ -632,10 +622,6 @@ dependencies = [
  "quote",
  "syn",
 ]
-
-[[package]]
-name = "tui"
-version = "0.1.0"
 
 [[package]]
 name = "typenum"
