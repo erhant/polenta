@@ -24,6 +24,7 @@ impl PolentaParser {
 
     /// Parses a given pair into a statement.
     pub fn parse_statement(pair: Pair<Rule>) -> Stmt {
+        println!("{}", pair.as_str());
         assert_eq!(pair.as_rule(), Rule::polenta_stmts);
 
         let pair = pair.into_inner().next().unwrap();

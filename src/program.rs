@@ -99,7 +99,6 @@ impl<F: IsPrimeField> Polenta<F> {
         &mut self,
         stmt: Stmt,
     ) -> Result<Polynomial<FieldElement<F>>, InterpreterError> {
-        // TODO: can we avoid the cloning here?
         match stmt {
             Stmt::Let(identifier, expr) => {
                 let poly = self.process_expr(expr, None)?;
@@ -119,12 +118,11 @@ impl<F: IsPrimeField> Polenta<F> {
             Stmt::Assert(l_expr, r_expr) => {
                 let l_poly = self.process_expr(l_expr, None)?;
                 let r_poly = self.process_expr(r_expr, None)?;
-                if l_poly == r_poly {
-                    Ok(Polynomial::new_monomial(FieldElement::<F>::one(), 0))
+                if l_poly != r_poly {
+                    Err(InterpreterError::AssertionFailed)
                 } else {
                     Ok(Polynomial::zero())
                 }
-                // self.symbols.insert("!!".to_string(), poly.clone());
             }
         }
     }

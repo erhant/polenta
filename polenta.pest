@@ -1,6 +1,7 @@
 /// Ignore
 WHITESPACE = _{ " " | "\t" | NEWLINE }
 COMMENT    = _{ "//" ~ (!"\n" ~ ANY)* }
+STMT_TERM  = _{ ";"+ }
 
 /// Atomics
 integer    = @{ ASCII_DIGIT+ }
@@ -27,10 +28,10 @@ primary = _{ integer | identifier | "(" ~ expr ~ ")" }
 
 /// Statements
 polenta_stmts = { let_poly_stmt | let_stmt | expr_stmt | assert_stmt }
-expr_stmt     = { expr ~ ";" }
-let_stmt      = { "let" ~ identifier ~ "=" ~ expr ~ ";" }
-let_poly_stmt = { "let" ~ identifier ~ "(" ~ identifier ~ ")" ~ "=" ~ expr ~ ";" }
-assert_stmt   = { "assert" ~ expr ~ "=" ~ expr }
+expr_stmt     = { expr ~ STMT_TERM }
+let_stmt      = { "let" ~ identifier ~ "=" ~ expr ~ STMT_TERM }
+let_poly_stmt = { "let" ~ identifier ~ "(" ~ identifier ~ ")" ~ "=" ~ expr ~ STMT_TERM }
+assert_stmt   = { "assert" ~ expr ~ "=" ~ expr ~ STMT_TERM }
 
 /// Main rule
 polenta = _{ SOI ~ polenta_stmts+ ~ EOI }

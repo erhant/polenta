@@ -95,6 +95,17 @@ let Q(x) = x/2;
 Q@P@Q@P@3; // Q(P(Q(P(3))))
 ```
 
+### Assertions
+
+You can make assertions within Polenta for safety, a failed assertion throws an `AssertionError`.
+
+```rs
+let x = 123;
+let y = 1 / 123;
+// inverse test
+assert x * y = 1;
+```
+
 ## Testing
 
 Run all tests with:

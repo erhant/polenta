@@ -39,3 +39,8 @@ fn test_let_2() {
         vec![("x", "12"), ("y", "24")],
     );
 }
+
+#[test]
+fn expr_many_terminators() {
+    run_test_for_symbols("let x = 22;;;;;;;", vec![("x", "22")]);
+}

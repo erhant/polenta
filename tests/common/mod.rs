@@ -10,16 +10,21 @@ use std::collections::HashMap;
 use polenta::{Polenta, PolentaError, PolentaUtilExt};
 type F = lambdaworks_math::field::fields::u64_goldilocks_field::Goldilocks64Field;
 
+pub fn run_test_for_assert(input: &str) -> () {
+    Polenta::<F>::new()
+        .interpret(input)
+        .expect("should interpret");
+}
+
 pub fn run_test_for_error(input: &str) -> PolentaError {
     let result = Polenta::<F>::new().interpret(input);
-    assert!(result.is_err());
-    return result.err().unwrap();
+    return result.expect_err("should return error");
 }
 
 /// Runs tests over the Goldilocks field (no particular reason for the field choice).
 pub fn run_test(input: &str) -> HashMap<String, String> {
     let mut polenta = Polenta::<F>::new();
-    polenta.interpret(input).unwrap(); // ignore returned values, just check symbols
+    polenta.interpret(input).expect("should interpret"); // ignore returned values, just check symbols
     polenta
         .symbols
         .into_iter()
