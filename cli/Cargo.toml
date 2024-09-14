@@ -1,7 +1,12 @@
 [package]
-name = "cli"
+name = "polenta-cli"
 version.workspace = true
 edition.workspace = true
 
 [dependencies]
-clap = "4.5.17"
+polenta = { path = "../polenta" }
+lambdaworks-math.workspace = true
+miette = { version = "7.2.0", features = ["fancy"] }
+thiserror = "1.0.63"
+colored = "2.1.0"
+rustyline = "14.0.0"

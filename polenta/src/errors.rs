@@ -30,7 +30,7 @@ pub enum InterpreterError {
 }
 
 #[derive(Error, Debug, Diagnostic)]
-#[error("Compiler Error")]
+#[error("Syntax Error")]
 // #[diagnostic(code(oops::my::bad))]
 pub struct ParserError {
     // The Source that we're gonna be printing snippets out of.
