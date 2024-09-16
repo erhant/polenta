@@ -8,6 +8,7 @@ use lambdaworks_math::{
 
 use crate::program::Polenta;
 
+/// Several utilities related to polynomial and field elements used within Polenta.
 pub trait PolentaUtilExt<F: IsField> {
     fn poly_as_felt(poly: &Polynomial<FieldElement<F>>) -> FieldElement<F>;
     fn felt_as_poly(felt: FieldElement<F>) -> Polynomial<FieldElement<F>>;

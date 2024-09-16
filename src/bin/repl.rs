@@ -9,7 +9,6 @@ type F = lambdaworks_math::field::fields::u64_goldilocks_field::Goldilocks64Fiel
 const CMD_HELP: &str = "help";
 const CMD_EXIT: &str = "exit";
 const CMD_RESET: &str = "reset";
-const CMD_HISTORY: &str = "history";
 
 const WELCOME_BANNER: &str = r#"
               _            _
@@ -42,10 +41,12 @@ fn main() -> Result<()> {
                     // do nothing
                 }
                 CMD_HELP => {
+                    let _ = rl.add_history_entry(CMD_HELP);
+
                     println!("Polenta is a simple language for polynomial manipulation.");
                     println!("{:<7}show this help message", CMD_HELP.yellow());
                     println!("{:<7}exit the program", CMD_EXIT.yellow());
-                    println!("{:<7}reset symbols & history", CMD_RESET.yellow());
+                    println!("{:<7}reset symbols", CMD_RESET.yellow());
                 }
                 CMD_EXIT => {
                     println!("bye!");
@@ -53,13 +54,12 @@ fn main() -> Result<()> {
                 }
                 CMD_RESET => {
                     polenta = Polenta::<F>::new();
-                    let _ = rl.clear_history();
                     println!("Symbol table reset.");
                 }
                 // TODO:!!!
                 "field" => {
                     println!("Order: {}", F::ORDER);
-                    todo!("change underlying field if arg is given, otherwise print name");
+                    // todo!("change underlying field if arg is given, otherwise print name");
                 }
 
                 _ => {

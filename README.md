@@ -1,6 +1,17 @@
 # Polenta
 
-Polenta is a polynomial arithmetic language, and **everything** is a polynomial. As such, it is more suited towards having fun instead of having performance.
+Polenta is a toy polynomial arithmetic language, and **everything** is a polynomial. As such, it is more suited towards having fun instead of having performance.
+
+It features:
+
+- [x] Polynomial arithmetic using [Lambdaworks](https://github.com/lambdaclass/lambdaworks)
+- [x] REPL to play around with
+- [x] `let` and `assert` expressions
+- [ ] `prove` and `commit` expressions
+
+> [!NOTE]
+>
+> The project mostly started to learn more about Pest, and it is a lovely project! See <https://pest.rs> for more!
 
 ## Installation
 
@@ -22,7 +33,7 @@ In this section we go over what can be done with Polenta.
 
 > [!TIP]
 >
-> All code snippets below are valid Polenta code.
+> All code shown below are valid Polenta code. To follow along, you can use the REPL installed above!
 
 ### Statements
 

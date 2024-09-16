@@ -5,6 +5,9 @@ use thiserror::Error;
 use crate::grammar::Rule;
 
 /// A [miette](https://crates.io/crates/miette#-in-libraries) diagnostic for Polenta errors.
+///
+/// You can use this to display errors in a nice way either by returning a Miette `Result` in your `main`,
+/// or creating a Miette `Report` from this and debug-printing it.
 #[derive(Error, Diagnostic, Debug)]
 pub enum PolentaError {
     #[error(transparent)]
@@ -16,6 +19,7 @@ pub enum PolentaError {
     ParserError(#[from] ParserError),
 }
 
+/// An error that can occur during interpretation.
 #[derive(Error, Debug, Diagnostic)]
 pub enum InterpreterError {
     #[help("try doing it better next time?")]
@@ -29,22 +33,23 @@ pub enum InterpreterError {
     AssertionFailed,
 }
 
+/// An error that can occur during parsing, most likely a syntax error.
 #[derive(Error, Debug, Diagnostic)]
 #[error("Syntax Error")]
-// #[diagnostic(code(oops::my::bad))]
 pub struct ParserError {
-    // The Source that we're gonna be printing snippets out of.
-    // This can be a String if you don't have or care about file names.
+    /// Source line of the error.
     #[source_code]
     src: NamedSource<String>,
-    // Snippets and highlights can be included in the diagnostic!
+    /// The problem location.
     #[label]
     problem: SourceSpan,
+    /// Helpful message to see what is expected and what has been found.
     #[help]
     help: String,
 }
 
-pub fn pest_error_to_miette_error(err: Error<Rule>) -> ParserError {
+/// A helper to convert a `pest` error into a `miette` error.
+pub(crate) fn pest_error_to_miette_error(err: Error<Rule>) -> ParserError {
     let (start, length) = match err.line_col {
         pest::error::LineColLocation::Pos((_, col)) => (col - 1, 1),
         pest::error::LineColLocation::Span((_, col_s), (_, col_e)) => {
