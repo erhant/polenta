@@ -9,17 +9,33 @@ identifier = @{ !"let" ~ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC)* }
 
 /// Unary operations
 unary_op = _{ minus }
-minus    =  { "-" }
+// arithmetic
+minus = { "-" }
 
 /// Binary operations
-bin_op   = _{ add | subtract | multiply | divide | modulo | power | eval }
-add      =  { "+" }
-subtract =  { "-" }
-multiply =  { "*" }
-divide   =  { "/" }
-modulo   =  { "%" }
-power    =  { "^" }
-eval     =  { "@" }
+bin_op = _{
+    add
+  | subtract
+  | multiply
+  | divide
+  | modulo
+  | power
+  | eq
+  | ne
+  | eval
+}
+// arithmetic
+add      = { "+" }
+subtract = { "-" }
+multiply = { "*" }
+divide   = { "/" }
+modulo   = { "%" }
+power    = { "^" }
+// comparators
+eq = { "==" }
+ne = { "!=" }
+// evaluation
+eval = { "@" }
 
 /// Expression
 expr    =  { atom ~ (bin_op ~ atom)* }
@@ -31,7 +47,7 @@ polenta_stmts = { let_poly_stmt | let_stmt | expr_stmt | assert_stmt }
 expr_stmt     = { expr ~ STMT_TERM }
 let_stmt      = { "let" ~ identifier ~ "=" ~ expr ~ STMT_TERM }
 let_poly_stmt = { "let" ~ identifier ~ "(" ~ identifier ~ ")" ~ "=" ~ expr ~ STMT_TERM }
-assert_stmt   = { "assert" ~ expr ~ "=" ~ expr ~ STMT_TERM }
+assert_stmt   = { "assert" ~ expr ~ STMT_TERM }
 
 /// Main rule
 polenta = _{ SOI ~ polenta_stmts+ ~ EOI }

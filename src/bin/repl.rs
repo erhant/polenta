@@ -9,9 +9,23 @@ type F = lambdaworks_math::field::fields::u64_goldilocks_field::Goldilocks64Fiel
 const CMD_HELP: &str = "help";
 const CMD_EXIT: &str = "exit";
 const CMD_RESET: &str = "reset";
+const CMD_HISTORY: &str = "history";
+
+const WELCOME_BANNER: &str = r#"
+              _            _
+  _ __   ___ | | ___ _ __ | |_ __ _
+ | '_ \ / _ \| |/ _ \ '_ \| __/ _` |
+ | |_) | (_) | |  __/ | | | || (_| |
+ | .__/ \___/|_|\___|_| |_|\__\__,_|
+ |_|
+"#;
 
 fn main() -> Result<()> {
-    println!("Welcome to Polenta!");
+    println!(
+        "{}\n(v{})",
+        WELCOME_BANNER.green().bold(),
+        env!("CARGO_PKG_VERSION")
+    );
     println!(
         "Type {} to quit, or see {} for all commands.",
         CMD_EXIT.yellow(),

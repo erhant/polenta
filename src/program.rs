@@ -73,6 +73,7 @@ impl<F: IsPrimeField> Polenta<F> {
                 let rhs = self.process_expr(*rhs, term)?;
 
                 match op {
+                    // arithmetic operations
                     BinaryOp::Add => Ok(lhs + rhs),
                     BinaryOp::Sub => Ok(lhs - rhs),
                     BinaryOp::Mul => Ok(lhs * rhs),
@@ -83,9 +84,12 @@ impl<F: IsPrimeField> Polenta<F> {
                             Ok(lhs / rhs)
                         }
                     }
-
                     BinaryOp::Mod => Ok(lhs.long_division_with_remainder(&rhs).1),
                     BinaryOp::Pow => Ok(Self::poly_pow(&lhs, Self::poly_as_felt(&rhs))),
+                    // comparison operations
+                    BinaryOp::Eq => Ok(Self::poly_from_bool(lhs == rhs)),
+                    BinaryOp::Ne => Ok(Self::poly_from_bool(lhs != rhs)),
+                    // evaluation
                     BinaryOp::Evl => {
                         Ok(Self::felt_as_poly(lhs.evaluate(&Self::poly_as_felt(&rhs))))
                     }
@@ -115,13 +119,14 @@ impl<F: IsPrimeField> Polenta<F> {
                 self.symbols.insert("!!".to_string(), poly.clone());
                 Ok(poly)
             }
-            Stmt::Assert(l_expr, r_expr) => {
-                let l_poly = self.process_expr(l_expr, None)?;
-                let r_poly = self.process_expr(r_expr, None)?;
-                if l_poly != r_poly {
+            Stmt::Assert(expr) => {
+                let result = self.process_expr(expr, None)?;
+                // fail if the result is zero, which means the assertion is false
+                // otherwise, return the result as is
+                if Self::poly_is_zero(&result) {
                     Err(InterpreterError::AssertionFailed)
                 } else {
-                    Ok(Polynomial::zero())
+                    Ok(result)
                 }
             }
         }

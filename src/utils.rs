@@ -16,6 +16,8 @@ pub trait PolentaUtilExt<F: IsField> {
         poly: &Polynomial<FieldElement<F>>,
         exponent: FieldElement<F>,
     ) -> Polynomial<FieldElement<F>>;
+    fn poly_is_zero(poly: &Polynomial<FieldElement<F>>) -> bool;
+    fn poly_from_bool(b: bool) -> Polynomial<FieldElement<F>>;
 }
 
 impl<F: IsPrimeField> PolentaUtilExt<F> for Polenta<F> {
@@ -24,6 +26,20 @@ impl<F: IsPrimeField> PolentaUtilExt<F> for Polenta<F> {
         // zero poly has len 0, and constant polys have len 1
         assert!(poly.coeff_len() <= 1, "Expected a constant polynomial."); // TODO: return error
         poly.leading_coefficient()
+    }
+
+    /// Returns true if the given polynomial is zero polynomial.
+    fn poly_is_zero(poly: &Polynomial<FieldElement<F>>) -> bool {
+        poly.coeff_len() == 0
+    }
+
+    /// Returns a polynomial representing the given boolean value, i.e. `1` for `true` and `0` for `false`.
+    fn poly_from_bool(b: bool) -> Polynomial<FieldElement<F>> {
+        if b {
+            Polynomial::new_monomial(FieldElement::one(), 0)
+        } else {
+            Polynomial::zero()
+        }
     }
 
     /// Treats the given field element as a constant polynomial.

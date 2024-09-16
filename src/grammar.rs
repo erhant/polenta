@@ -45,6 +45,8 @@ pub enum BinaryOp {
     Div,
     Mod,
     Pow,
+    Eq,
+    Ne,
     Evl,
 }
 
@@ -73,7 +75,7 @@ pub enum Stmt {
     Expr(Expr),
     Let(String, Expr),
     LetPoly(String, String, Expr),
-    Assert(Expr, Expr),
+    Assert(Expr),
 }
 
 // Pratt parser for expressions with operator precedence.
@@ -82,18 +84,15 @@ lazy_static::lazy_static! {
         use pest::pratt_parser::{Assoc::*, Op};
         use Rule::*;
 
-        // Precedence is defined lowest to highest below:
-        // binary +, -
-        // binary *, /
-        // binary ^, %,
-        // binary @
-        // unary -
+        // Precedence is defined lowest to highest below.
+        // see also: https://en.cppreference.com/w/c/language/operator_precedence
         PrattParser::new()
-            .op(Op::infix(add, Left) | Op::infix(subtract, Left))
-            .op(Op::infix(multiply, Left) | Op::infix(divide, Left))
-            .op(Op::infix(modulo, Right) | Op::infix(power, Right))
-            .op(Op::infix(eval, Right))
-            .op(Op::prefix(minus))
+            .op(Op::infix(eq, Left) | Op::infix(ne, Left)) // ==, !=
+            .op(Op::infix(add, Left) | Op::infix(subtract, Left)) // +, -
+            .op(Op::infix(multiply, Left) | Op::infix(divide, Left) | Op::infix(modulo, Left)) // *, /, %
+            .op(Op::infix(power, Right)) // ^
+            .op(Op::infix(eval, Right)) // @
+            .op(Op::prefix(minus)) // -
     };
 }
 
@@ -119,6 +118,8 @@ fn parse_expr(pair: Pair<Rule>) -> Expr {
                 Rule::modulo => BinaryOp::Mod,
                 Rule::power => BinaryOp::Pow,
                 Rule::eval => BinaryOp::Evl,
+                Rule::eq => BinaryOp::Eq,
+                Rule::ne => BinaryOp::Ne,
                 rule => unreachable!("Expr::parse expected infix operation, found {:?}", rule),
             },
             rhs: Box::new(rhs),
@@ -138,26 +139,20 @@ fn parse_expr(pair: Pair<Rule>) -> Expr {
 /// ### Example
 ///
 /// ```rs
-/// assert <expr> = <expr> ;
+/// assert <expr> ;
 /// ```
 fn parse_assert_stmt(pair: Pair<Rule>) -> Stmt {
     debug_assert_eq!(pair.as_rule(), Rule::assert_stmt);
     let mut pairs = pair.into_inner();
 
-    // assert <expr> = <expr> ;
+    // assert <expr> ;
     //        ^^^^
     let pair = pairs.next().unwrap();
     debug_assert_eq!(pair.as_rule(), Rule::expr);
-    let l_expr = parse_expr(pair);
-
-    // assert <expr> = <expr> ;
-    //               ^^^^
-    let pair = pairs.next().unwrap();
-    debug_assert_eq!(pair.as_rule(), Rule::expr);
-    let r_expr = parse_expr(pair);
+    let expr = parse_expr(pair);
 
     debug_assert!(pairs.next().is_none());
-    Stmt::Assert(l_expr, r_expr)
+    Stmt::Assert(expr)
 }
 
 fn parse_expr_stmt(pair: Pair<Rule>) -> Stmt {
