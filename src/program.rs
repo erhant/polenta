@@ -40,7 +40,7 @@ impl<F: IsPrimeField> Polenta<F> {
     ///
     /// ## Example
     ///
-    /// ```rust
+    /// ```rs
     /// let input = r#"
     /// let P(x) = 3 * x + 1;
     /// let Q(x) = x / 2;

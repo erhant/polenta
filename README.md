@@ -1,5 +1,8 @@
 # Polenta
 
+![Crates.io Version](https://img.shields.io/crates/v/polenta)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/erhant/polenta/tests)
+
 Polenta is a toy polynomial arithmetic language, and **everything** is a polynomial. As such, it is more suited towards having fun instead of having performance.
 
 ## Features

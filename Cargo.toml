@@ -1,6 +1,6 @@
 [package]
 name = "polenta"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "A toy language about polynomials over finite-fields"
 authors = ["erhant"]
@@ -23,6 +23,6 @@ colored = { version = "2.1.0", optional = true }
 rustyline = { version = "14.0.0", optional = true }
 
 [[bin]]
-name = "repl"
+name = "polenta"
 path = "src/bin/repl.rs"
 required-features = ["repl"]
