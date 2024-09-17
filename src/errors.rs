@@ -22,13 +22,11 @@ pub enum PolentaError {
 /// An error that can occur during interpretation.
 #[derive(Error, Debug, Diagnostic)]
 pub enum InterpreterError {
-    #[help("try doing it better next time?")]
     #[error("Unknown Identifier: {0}")]
     UnknownIdentifier(String),
-    #[help("im zeroooo?")]
     #[error("Division by Zero")]
     DivisionByZero,
-    #[help("dont do it")]
+    #[help("Asserted expression must be non-zero.")]
     #[error("Assertion Failed")]
     AssertionFailed,
 }
@@ -70,7 +68,7 @@ pub(crate) fn pest_error_to_miette_error(err: Error<Rule>) -> ParserError {
     let miette_error = ParserError {
         src: NamedSource::new("input", err.line().to_string()).with_language("Rust"),
         problem: SourceSpan::new(start.into(), length),
-        help: help,
+        help,
     };
     miette_error
 }

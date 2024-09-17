@@ -2,6 +2,7 @@
 name = "polenta"
 version = "0.1.0"
 edition = "2021"
+description = "A toy language about polynomials over finite-fields"
 authors = ["erhant"]
 license = "MIT"
 

@@ -10,6 +10,7 @@ use std::collections::HashMap;
 
 use crate::grammar::{BinaryOp, Expr, PolentaParser, Stmt, UnaryOp};
 
+/// Polenta interpreter.
 pub struct Polenta<F: IsPrimeField> {
     /// Symbol table as a map from identifiers to polynomials.
     /// Constant values are stored as constant polynomials.
@@ -29,6 +30,26 @@ impl<F: IsPrimeField> Polenta<F> {
         }
     }
 
+    /// Interprets the given input string and returns the resulting polynomials.
+    ///
+    /// The input is expected to be composed of several statements, each interpreted in the given
+    /// order and resulting in a polynomial.
+    ///
+    /// May throw out a `PolentaError` if an error occurs during interpretation, either within the
+    /// parsing step or the interpretation step.
+    ///
+    /// ## Example
+    ///
+    /// ```rust
+    /// let input = r#"
+    /// let P(x) = 3 * x + 1;
+    /// let Q(x) = x / 2;
+    /// let z = Q@P@(5);
+    /// assert z == 8;
+    /// "#;
+    ///
+    /// Polenta::<F>::new().interpret(input)?;
+    /// ```
     pub fn interpret(
         &mut self,
         input: &str,

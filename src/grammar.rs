@@ -37,6 +37,7 @@ impl PolentaParser {
     }
 }
 
+/// Binary operators.
 #[derive(Debug, Clone)]
 pub enum BinaryOp {
     Add,
@@ -50,11 +51,13 @@ pub enum BinaryOp {
     Evl,
 }
 
+/// Unary operators.
 #[derive(Debug, Clone)]
 pub enum UnaryOp {
     Minus,
 }
 
+/// Expressions.
 #[derive(Debug, Clone)]
 pub enum Expr {
     Identifier(String),
@@ -70,6 +73,7 @@ pub enum Expr {
     },
 }
 
+/// Statements.
 #[derive(Debug, Clone)]
 pub enum Stmt {
     Expr(Expr),
@@ -96,7 +100,7 @@ lazy_static::lazy_static! {
     };
 }
 
-/// Parse an expression.
+/// Parse an expression from a given `Pair`.
 fn parse_expr(pair: Pair<Rule>) -> Expr {
     assert_eq!(pair.as_rule(), Rule::expr);
     let pairs = pair.into_inner();
@@ -136,8 +140,6 @@ fn parse_expr(pair: Pair<Rule>) -> Expr {
 
 /// Parses an assert statement.
 ///
-/// ### Example
-///
 /// ```rs
 /// assert <expr> ;
 /// ```
@@ -155,6 +157,11 @@ fn parse_assert_stmt(pair: Pair<Rule>) -> Stmt {
     Stmt::Assert(expr)
 }
 
+/// Parses an expression statement.
+///
+/// ```rs
+/// <expr> ;
+/// ```
 fn parse_expr_stmt(pair: Pair<Rule>) -> Stmt {
     debug_assert_eq!(pair.as_rule(), Rule::expr_stmt);
     let mut pairs = pair.into_inner();
@@ -169,6 +176,11 @@ fn parse_expr_stmt(pair: Pair<Rule>) -> Stmt {
     Stmt::Expr(expr)
 }
 
+/// Parses a let statement.
+///
+/// ```rs
+/// let <identifier> = <expr> ;
+/// ```
 fn parse_let_stmt(pair: Pair<Rule>) -> Stmt {
     debug_assert_eq!(pair.as_rule(), Rule::let_stmt);
     let mut pairs = pair.into_inner();
@@ -189,6 +201,11 @@ fn parse_let_stmt(pair: Pair<Rule>) -> Stmt {
     Stmt::Let(identifier, expr)
 }
 
+/// Parses a let statement with a polynomial term.
+///
+/// ```rs
+/// let <identifier> ( <identifier> ) = <expr> ;
+/// ```
 fn parse_let_poly_stmt(pair: Pair<Rule>) -> Stmt {
     debug_assert_eq!(pair.as_rule(), Rule::let_poly_stmt);
     let mut pairs = pair.into_inner();

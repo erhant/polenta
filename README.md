@@ -2,9 +2,9 @@
 
 Polenta is a toy polynomial arithmetic language, and **everything** is a polynomial. As such, it is more suited towards having fun instead of having performance.
 
-It features:
+## Features
 
-- [x] Polynomial arithmetic using [Lambdaworks](https://github.com/lambdaclass/lambdaworks)
+- [x] Polynomial arithmetic using [lambdaworks](https://github.com/lambdaclass/lambdaworks)
 - [x] REPL to play around with
 - [x] `let` and `assert` expressions
 - [ ] `prove` and `commit` expressions
@@ -31,8 +31,6 @@ cargo install polenta --bin repl --features="repl"
 
 In this section we go over what can be done with Polenta.
 
-> [!TIP]
->
 > All code shown below are valid Polenta code. To follow along, you can use the REPL installed above!
 
 ### Statements
@@ -51,8 +49,6 @@ However, you should keep in mind that all operations are defined over the field,
 9223372034707292161
 ```
 
-> [!TIP]
->
 > Polenta supports single line comments using `//`, as shown above.
 
 ### Creating a Polynomial
