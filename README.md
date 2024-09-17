@@ -1,7 +1,8 @@
 # Polenta
 
 ![Crates.io Version](https://img.shields.io/crates/v/polenta)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/erhant/polenta/tests)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/erhant/polenta/tests.yml?label=tests)
+![Crates.io License](https://img.shields.io/crates/l/polenta)
 
 Polenta is a toy polynomial arithmetic language, and **everything** is a polynomial. As such, it is more suited towards having fun instead of having performance.
 
@@ -12,8 +13,6 @@ Polenta is a toy polynomial arithmetic language, and **everything** is a polynom
 - [x] `let` and `assert` expressions
 - [ ] `prove` and `commit` expressions
 
-> [!NOTE]
->
 > The project mostly started to learn more about Pest, and it is a lovely project! See <https://pest.rs> for more!
 
 ## Installation
