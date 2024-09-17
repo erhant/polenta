@@ -26,7 +26,7 @@ cargo add polenta
 You can install the REPL with:
 
 ```sh
-cargo install polenta --bin repl --features="repl"
+cargo install polenta --features="repl"
 ```
 
 ## Usage
