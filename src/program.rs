@@ -11,16 +11,11 @@ use std::collections::HashMap;
 use crate::grammar::{BinaryOp, Expr, PolentaParser, Stmt, UnaryOp};
 
 /// Polenta interpreter.
+#[derive(Default, Debug, Clone)]
 pub struct Polenta<F: IsPrimeField> {
     /// Symbol table as a map from identifiers to polynomials.
     /// Constant values are stored as constant polynomials.
     pub symbols: HashMap<String, Polynomial<FieldElement<F>>>,
-}
-
-impl<F: IsPrimeField> Default for Polenta<F> {
-    fn default() -> Self {
-        Self::new()
-    }
 }
 
 impl<F: IsPrimeField> Polenta<F> {
@@ -32,7 +27,7 @@ impl<F: IsPrimeField> Polenta<F> {
 
     /// Interprets the given input string and returns the resulting polynomials.
     ///
-    /// The input is expected to be composed of several statements, each interpreted in the given
+    /// The input is expected to be composed of several **statements**, each interpreted in the given
     /// order and resulting in a polynomial.
     ///
     /// May throw out a `PolentaError` if an error occurs during interpretation, either within the
@@ -62,6 +57,19 @@ impl<F: IsPrimeField> Polenta<F> {
             .collect()
     }
 
+    pub fn interpret_readable(&mut self, input: &str) -> Result<String, PolentaError> {
+        let polys = self.interpret(input)?;
+
+        Ok(Polenta::poly_print(polys.last().unwrap()))
+    }
+
+    /// Processes the given expression and returns the resulting polynomial. The expression is recursively evaluated.
+    ///
+    /// May throw out an `InterpreterError` if an error occurs during the evaluation.
+    ///
+    /// If `term` is `Some`, the identifier is treated as a term, and the expression is evaluated as a polynomial.
+    /// For example, `let P(x) = ...` has a term `Some("x")` but `let p = ...` does not.
+    ///
     fn process_expr(
         &mut self,
         expr: Expr,
@@ -119,7 +127,10 @@ impl<F: IsPrimeField> Polenta<F> {
         }
     }
 
+    /// Processes a statement.
+    ///
     /// The value of last evaluated "expression statement" is stored at `!!` symbol for internal testing.
+    /// TODO: may remove this feature in the future.
     fn process_statement(
         &mut self,
         stmt: Stmt,
@@ -150,6 +161,38 @@ impl<F: IsPrimeField> Polenta<F> {
                     Ok(result)
                 }
             }
+        }
+    }
+
+    /// Clears the symbol table.
+    pub fn reset(&mut self) {
+        self.symbols = HashMap::new();
+    }
+
+    /// Convert all symbols to be elements in a different field.
+    pub fn convert<T: IsPrimeField>(&self) -> Polenta<T> {
+        Polenta {
+            symbols: self
+                .symbols
+                .clone()
+                .into_iter()
+                .map(|(key, val)| {
+                    // map all elements within the polynomial to the new field
+                    (
+                        key,
+                        Polynomial {
+                            coefficients: val
+                                .coefficients()
+                                .iter()
+                                .map(|elt| FieldElement::<T>::from_hex(&elt.to_hex()).unwrap())
+                                .collect::<Vec<_>>(),
+                        },
+                    )
+                })
+                .fold(HashMap::new(), |mut acc, (k, v)| {
+                    acc.insert(k, v);
+                    acc
+                }),
         }
     }
 }

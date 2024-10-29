@@ -9,10 +9,10 @@ Polenta is a toy polynomial arithmetic language, and **everything** is a polynom
 ## Features
 
 - [x] Polynomial arithmetic using [lambdaworks](https://github.com/lambdaclass/lambdaworks)
-- [x] REPL to play around with
+- [x] Simple to use REPL as a playground
 - [x] `let` and `assert` expressions
 - [ ] `prove` and `commit` expressions
-- [ ] selecting fields
+- [ ] Field selections
 
 > The project mostly started to learn more about Pest, and it is a lovely project! See <https://pest.rs> for more!
 

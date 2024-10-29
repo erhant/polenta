@@ -1,60 +1,25 @@
 use lambdaworks_math::{
-    field::{
-        element::FieldElement,
-        traits::{IsField, IsPrimeField},
-    },
+    field::{element::FieldElement, traits::IsPrimeField},
     polynomial::Polynomial,
 };
 
 use crate::program::Polenta;
 
 /// Several utilities related to polynomials and field elements used within Polenta.
-pub trait PolentaUtilExt<F: IsField> {
+pub trait PolentaUtilExt<F: IsPrimeField> {
     /// Treats the given constants polynomial as a field element.
-    fn poly_as_felt(poly: &Polynomial<FieldElement<F>>) -> FieldElement<F>;
-
-    /// Treats the given field element as a constant polynomial.
-    fn felt_as_poly(felt: FieldElement<F>) -> Polynomial<FieldElement<F>>;
-
-    /// Pretty-prints a given polynomial.
-    fn poly_print(poly: &Polynomial<FieldElement<F>>) -> String;
-
-    /// Multiplies a polynomial with itself many times.
-    fn poly_pow(
-        poly: &Polynomial<FieldElement<F>>,
-        exponent: FieldElement<F>,
-    ) -> Polynomial<FieldElement<F>>;
-
-    /// Returns true if the given polynomial is a zero polynomial.
-    fn poly_is_zero(poly: &Polynomial<FieldElement<F>>) -> bool;
-
-    /// Returns a polynomial representing the given boolean value, i.e. `1` for `true` and `0` for `false`.
-    fn poly_from_bool(b: bool) -> Polynomial<FieldElement<F>>;
-}
-
-impl<F: IsPrimeField> PolentaUtilExt<F> for Polenta<F> {
     fn poly_as_felt(poly: &Polynomial<FieldElement<F>>) -> FieldElement<F> {
         // zero poly has len 0, and constant polys have len 1
         assert!(poly.coeff_len() <= 1, "Expected a constant polynomial."); // TODO: return error
         poly.leading_coefficient()
     }
 
-    fn poly_is_zero(poly: &Polynomial<FieldElement<F>>) -> bool {
-        poly.coeff_len() == 0
-    }
-
-    fn poly_from_bool(b: bool) -> Polynomial<FieldElement<F>> {
-        if b {
-            Polynomial::new_monomial(FieldElement::one(), 0)
-        } else {
-            Polynomial::zero()
-        }
-    }
-
+    /// Treats the given field element as a constant polynomial.
     fn felt_as_poly(felt: FieldElement<F>) -> Polynomial<FieldElement<F>> {
         Polynomial::new_monomial(felt, 0)
     }
 
+    /// Pretty-prints a given polynomial.
     fn poly_print(poly: &Polynomial<FieldElement<F>>) -> String {
         let coeff_decimals = poly
             .coefficients()
@@ -85,6 +50,7 @@ impl<F: IsPrimeField> PolentaUtilExt<F> for Polenta<F> {
         }
     }
 
+    /// Multiplies a polynomial with itself many times.
     fn poly_pow(
         poly: &Polynomial<FieldElement<F>>,
         mut exponent: FieldElement<F>,
@@ -99,4 +65,20 @@ impl<F: IsPrimeField> PolentaUtilExt<F> for Polenta<F> {
 
         result
     }
+
+    /// Returns true if the given polynomial is a zero polynomial.
+    fn poly_is_zero(poly: &Polynomial<FieldElement<F>>) -> bool {
+        poly.coeff_len() == 0
+    }
+
+    /// Returns a polynomial representing the given boolean value, i.e. `1` for `true` and `0` for `false`.
+    fn poly_from_bool(b: bool) -> Polynomial<FieldElement<F>> {
+        if b {
+            Polynomial::new_monomial(FieldElement::one(), 0)
+        } else {
+            Polynomial::zero()
+        }
+    }
 }
+
+impl<F: IsPrimeField> PolentaUtilExt<F> for Polenta<F> {}

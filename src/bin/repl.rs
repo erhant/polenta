@@ -1,14 +1,13 @@
 use colored::Colorize;
 use miette::{IntoDiagnostic, Report, Result};
-use polenta::{Polenta, PolentaUtilExt};
+use polenta::{Polenta, PolentaFields};
 use rustyline::error::ReadlineError;
 use rustyline::DefaultEditor;
-
-type F = lambdaworks_math::field::fields::u64_goldilocks_field::Goldilocks64Field;
 
 const CMD_HELP: &str = "help";
 const CMD_EXIT: &str = "exit";
 const CMD_RESET: &str = "reset";
+const CMD_FIELD: &str = "field";
 
 const WELCOME_BANNER: &str = r#"
               _            _
@@ -30,49 +29,50 @@ fn main() -> Result<()> {
         CMD_EXIT.yellow(),
         CMD_HELP.yellow()
     );
-    let mut polenta = Polenta::<F>::new();
+
+    // default is Goldilocks
+    let mut polenta = PolentaFields::default();
     let mut rl = DefaultEditor::new().into_diagnostic()?;
 
     let prompt_line = format!("{}", "> ".green());
     loop {
         match rl.readline(&prompt_line) {
+            // TODO: use clap here
             Ok(line) => match line.as_str() {
                 "" => {
                     // do nothing
                 }
                 CMD_HELP => {
                     let _ = rl.add_history_entry(CMD_HELP);
-
-                    println!("Polenta is a simple language for polynomial manipulation.");
+                    println!("Polenta is a toy language for polynomial manipulation.");
                     println!("{:<7}show this help message", CMD_HELP.yellow());
                     println!("{:<7}exit the program", CMD_EXIT.yellow());
                     println!("{:<7}reset symbols", CMD_RESET.yellow());
+                    println!("");
+                    println!("Use arrow keys for command history.");
                 }
                 CMD_EXIT => {
                     println!("bye!");
                     break;
                 }
                 CMD_RESET => {
-                    polenta = Polenta::<F>::new();
-                    println!("Symbol table reset.");
+                    polenta.reset();
+                    println!("Cleared symbols.");
                 }
-                // TODO:!!!
-                "field" => {
-                    println!("Order: {}", F::ORDER);
-                    // todo!("change underlying field if arg is given, otherwise print name");
+                CMD_FIELD => {
+                    polenta = PolentaFields::Mersenne31(Polenta::new());
                 }
-
                 _ => {
-                    // add ; to the input
-                    let line_sanitized = format!("{};", line);
+                    // ensure input ends with `;`
+                    let line_sanitized = format!("{};", line.trim_end_matches(';'));
                     let input = line_sanitized.as_str();
                     let _ = rl.add_history_entry(input);
 
                     // process input
                     let result = polenta.interpret(input);
                     match result {
-                        Ok(polys) => {
-                            println!("{}", Polenta::poly_print(polys.last().unwrap()).blue());
+                        Ok(result) => {
+                            println!("{}", result.blue());
                         }
                         Err(e) => {
                             println!("{:?}", Report::from(e));
