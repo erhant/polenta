@@ -152,4 +152,21 @@ impl<F: IsPrimeField> Polenta<F> {
             }
         }
     }
+
+    pub fn migrate_symbols_from<OTHER: IsPrimeField>(
+        &mut self,
+        other: &Polenta<OTHER>,
+    ) -> Result<(), PolentaError> {
+        for (identifier, poly) in &other.symbols {
+            // convert the polynomial to the new field
+            let mut new_coeffs = Vec::with_capacity(poly.coefficients.len());
+            for coeff in &poly.coefficients {
+                let new_coeff = FieldElement::<F>::from_hex(&coeff.to_hex());
+                new_coeffs.push(new_coeff.expect("could not convert coefficient"));
+            }
+            let new_poly = Polynomial::new(&new_coeffs);
+            self.symbols.insert(identifier.clone(), new_poly);
+        }
+        Ok(())
+    }
 }
