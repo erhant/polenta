@@ -2,7 +2,7 @@ use miette::{Diagnostic, NamedSource, SourceSpan};
 use pest::error::{Error, ErrorVariant};
 use thiserror::Error;
 
-use crate::grammar::Rule;
+use crate::parser::Rule;
 
 /// A [miette](https://crates.io/crates/miette#-in-libraries) diagnostic for Polenta errors.
 ///
@@ -29,6 +29,9 @@ pub enum InterpreterError {
     #[help("Asserted expression must be non-zero.")]
     #[error("Assertion Failed")]
     AssertionFailed,
+    #[help("Exponent and evaluation point must be constant (degree 0) polynomials.")]
+    #[error("Expected Constant Polynomial")]
+    ExpectedConstant,
 }
 
 /// An error that can occur during parsing, most likely a syntax error.

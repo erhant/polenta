@@ -14,8 +14,6 @@ Polenta is a toy polynomial arithmetic language, and **everything** is a polynom
 - [ ] `prove` and `commit` expressions
 - [ ] selecting fields
 
-> The project mostly started to learn more about Pest, and it is a lovely project! See <https://pest.rs> for more!
-
 ## Installation
 
 You can add the [crate](https://crates.io/crates/polenta) with:
