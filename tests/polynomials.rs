@@ -21,6 +21,34 @@ fn test_power_precedence() {
 }
 
 #[test]
+fn test_pow_zero() {
+    run_test_for_symbols("let a = 5^0;", vec![("a", "1")]);
+    run_test_for_symbols("let P(x) = (x + 1)^0;", vec![("P", "1")]);
+}
+
+#[test]
+fn test_pow_one() {
+    run_test_for_symbols("let a = 7^1;", vec![("a", "7")]);
+    run_test_for_symbols("let P(x) = (2*x + 3)^1;", vec![("P", "2*x + 3")]);
+}
+
+#[test]
+fn test_pow_large() {
+    // (x+1)^4 = x^4 + 4x^3 + 6x^2 + 4x + 1
+    run_test_for_symbols(
+        "let P(x) = (x + 1)^4;",
+        vec![("P", "x^4 + 4*x^3 + 6*x^2 + 4*x + 1")],
+    );
+    // 2^10 = 1024
+    run_test_for_symbols("let a = 2^10;", vec![("a", "1024")]);
+}
+
+#[test]
+fn test_pow_of_zero() {
+    run_test_for_symbols("let a = 0^5;", vec![("a", "0")]);
+}
+
+#[test]
 fn test_let_shadowing() {
     run_test_for_symbols(
         r#"

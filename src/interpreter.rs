@@ -8,7 +8,7 @@ use lambdaworks_math::{
 };
 use std::collections::HashMap;
 
-use crate::grammar::{BinaryOp, Expr, PolentaParser, Stmt, UnaryOp};
+use crate::parser::{BinaryOp, Expr, PolentaParser, Stmt, UnaryOp};
 
 /// Polenta interpreter.
 pub struct Polenta<F: IsPrimeField> {
@@ -106,13 +106,13 @@ impl<F: IsPrimeField> Polenta<F> {
                         }
                     }
                     BinaryOp::Mod => Ok(lhs.long_division_with_remainder(&rhs).1),
-                    BinaryOp::Pow => Ok(Self::poly_pow(&lhs, Self::poly_as_felt(&rhs))),
+                    BinaryOp::Pow => Ok(Self::poly_pow(&lhs, Self::poly_as_felt(&rhs)?)),
                     // comparison operations
                     BinaryOp::Eq => Ok(Self::poly_from_bool(lhs == rhs)),
                     BinaryOp::Ne => Ok(Self::poly_from_bool(lhs != rhs)),
                     // evaluation
                     BinaryOp::Evl => {
-                        Ok(Self::felt_as_poly(lhs.evaluate(&Self::poly_as_felt(&rhs))))
+                        Ok(Self::felt_as_poly(lhs.evaluate(&Self::poly_as_felt(&rhs)?)))
                     }
                 }
             }

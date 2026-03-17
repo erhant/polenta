@@ -20,3 +20,15 @@ fn test_syntax_error() {
     let err = run_test_for_error("let a = ++;");
     assert_eq!("Syntax Error".to_string(), err.to_string());
 }
+
+#[test]
+fn test_poly_pow_poly() {
+    let err = run_test_for_error("let P(x) = 2 + x; P ^ P;");
+    assert_eq!("Expected Constant Polynomial".to_string(), err.to_string());
+}
+
+#[test]
+fn test_poly_eval_at_poly() {
+    let err = run_test_for_error("let P(x) = x + 1; let Q(x) = x + 2; P@Q;");
+    assert_eq!("Expected Constant Polynomial".to_string(), err.to_string());
+}

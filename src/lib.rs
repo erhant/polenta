@@ -1,10 +1,14 @@
 #![doc = include_str!("../README.md")]
 
 mod errors;
-mod grammar;
-mod program;
+pub mod fields;
+mod instance;
+mod interpreter;
+mod parser;
 mod utils;
 
-pub use errors::PolentaError;
-pub use program::Polenta;
+pub use errors::{InterpreterError, PolentaError};
+pub use fields::FieldType;
+pub use instance::PolentaInstance;
+pub use interpreter::Polenta;
 pub use utils::PolentaUtilExt;
