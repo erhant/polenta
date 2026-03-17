@@ -7,7 +7,7 @@ mod interpreter;
 mod parser;
 mod utils;
 
-pub use errors::PolentaError;
+pub use errors::{InterpreterError, PolentaError};
 pub use fields::FieldType;
 pub use instance::PolentaInstance;
 pub use interpreter::Polenta;

@@ -15,14 +15,15 @@ const WELCOME_BANNER: &str = r#"
  | '_ \ / _ \| |/ _ \ '_ \| __/ _` |
  | |_) | (_) | |  __/ | | | || (_| |
  | .__/ \___/|_|\___|_| |_|\__\__,_|
- |_|
+ |_|   v{{VERSION}}
 "#;
 
 fn main() -> Result<()> {
     println!(
-        "{}\n(v{})",
-        WELCOME_BANNER.green().bold(),
-        env!("CARGO_PKG_VERSION")
+        "{}",
+        WELCOME_BANNER
+            .replace("{{VERSION}}", env!("CARGO_PKG_VERSION"))
+            .green(),
     );
     println!(
         "Type {} to quit, or see {} for all commands.",

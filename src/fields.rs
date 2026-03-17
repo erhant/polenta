@@ -54,7 +54,8 @@ impl FieldType {
     }
 }
 
-/// Export symbols as (name, hex coefficients) pairs.
+/// Export symbols as (name, hex coefficient strings) pairs.
+/// Always normalizes to unprefixed hex so `from_hex` can parse on import.
 pub fn export_symbols<F: IsPrimeField>(
     symbols: &HashMap<String, Polynomial<FieldElement<F>>>,
 ) -> Vec<(String, Vec<String>)> {
@@ -64,14 +65,14 @@ pub fn export_symbols<F: IsPrimeField>(
             let hex_coeffs = poly
                 .coefficients()
                 .iter()
-                .map(|c| format!("{}", c.representative()))
+                .map(|c| repr_to_hex(&format!("{}", c.representative())))
                 .collect();
             (name.clone(), hex_coeffs)
         })
         .collect()
 }
 
-/// Import symbols from hex coefficients, reducing mod p automatically via `from_hex`.
+/// Import symbols from hex coefficient strings, reducing mod p automatically via `from_hex`.
 pub fn import_symbols<F: IsPrimeField>(
     symbols: &mut HashMap<String, Polynomial<FieldElement<F>>>,
     data: &[(String, Vec<String>)],
@@ -79,8 +80,24 @@ pub fn import_symbols<F: IsPrimeField>(
     for (name, hex_coeffs) in data {
         let coeffs: Vec<FieldElement<F>> = hex_coeffs
             .iter()
-            .map(|h| FieldElement::<F>::from_hex(h).expect("coefficient conversion failed"))
+            .filter_map(|h| FieldElement::<F>::from_hex(h).ok())
             .collect();
         symbols.insert(name.clone(), Polynomial::new(&coeffs));
+    }
+}
+
+/// Normalizes a representative Display string to unprefixed hex.
+/// - u64 Display gives decimal (e.g. "42") → converted to hex ("2a")
+/// - UnsignedInteger Display gives "0x..." → prefix stripped
+fn repr_to_hex(s: &str) -> String {
+    if let Some(h) = s.strip_prefix("0x").or_else(|| s.strip_prefix("0X")) {
+        return h.to_string();
+    }
+
+    // decimal string from u64 Display — parse and format as hex
+    // (all u64-backed fields fit in u64)
+    match s.parse::<u64>() {
+        Ok(v) => format!("{:x}", v),
+        Err(_) => s.to_string(),
     }
 }
