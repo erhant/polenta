@@ -10,7 +10,7 @@ license = "MIT"
 repl = ["colored", "rustyline"]
 
 [dependencies]
-lambdaworks-math = { version = "0.13.0" }
+lambdaworks-math = { version = "0.7.0" }
 lazy_static = "1.5.0"
 miette = { version = "7.2.0", features = ["fancy"] }
 pest = { version = "2.7.12" }
