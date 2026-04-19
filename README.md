@@ -12,7 +12,7 @@ Polenta is a toy polynomial arithmetic language, and **everything** is a polynom
 - [x] REPL to play around with
 - [x] `let` and `assert` expressions
 - [ ] `prove` and `commit` expressions
-- [ ] selecting fields
+- [x] finite field selection
 
 ## Installation
 
@@ -169,7 +169,7 @@ An assertion fails if the expression that they are given is a zero polynomial.
 
 While using REPL, if there is an error you will see it on screen with clear logs.
 
-```sh
+```rs
 > let x = idontexist;
   × Unknown Identifier: idontexist
 > 5/0;
@@ -183,12 +183,22 @@ While using REPL, if there is an error you will see it on screen with clear logs
   help: Expected one of [expr], got []
 ```
 
-## Testing
+### Changing Fields
 
-Run all tests with:
+While using REPL, you can change the active field with the `field` command. The default field is `babybear31`.
 
-```sh
-cargo test
+```rs
+> field
+Current field: babybear31 (order: 2013265921)
+Available fields:
+  *babybear31
+   goldilocks
+   stark252
+   mersenne31
+Use field <name> to switch fields.
+
+> field stark252
+Switched to stark252 field (order: 3618502788666131213697322783095070105623107215331596699973092056135872020481). Symbol table migrated.
 ```
 
 ## License
