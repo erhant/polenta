@@ -120,7 +120,9 @@ impl<F: IsPrimeField> PolentaUtilExt<F> for Polenta<F> {
 /// Converts a representative's string to decimal.
 /// Passes through strings that are already decimal (e.g. from u64 Display),
 /// and converts hex-prefixed strings (e.g. from UnsignedInteger Display).
-fn repr_to_decimal(s: &str) -> String {
+///
+/// TODO: could be refactored
+pub(crate) fn repr_to_decimal(s: &str) -> String {
     let hex = match s.strip_prefix("0x").or_else(|| s.strip_prefix("0X")) {
         Some(h) => h,
         None => return s.to_string(),
@@ -166,5 +168,18 @@ fn repr_to_decimal(s: &str) -> String {
         "0".to_string()
     } else {
         trimmed.to_string()
+    }
+}
+
+/// Normalizes a representative Display string to unprefixed hex.
+/// - u64 Display gives decimal (e.g. "42") → converted to hex ("2a")
+/// - UnsignedInteger Display gives "0x..." → prefix stripped
+pub(crate) fn repr_to_hex(s: &str) -> String {
+    if let Some(h) = s.strip_prefix("0x").or_else(|| s.strip_prefix("0X")) {
+        return h.to_string();
+    }
+    match s.parse::<u64>() {
+        Ok(v) => format!("{:x}", v),
+        Err(_) => s.to_string(),
     }
 }

@@ -1,86 +1,159 @@
-use lambdaworks_math::field::fields::fft_friendly::{
-    babybear::Babybear31PrimeField, stark_252_prime_field::Stark252PrimeField,
-    u64_goldilocks::U64GoldilocksPrimeField,
-    u64_mersenne_montgomery_field::Mersenne31MontgomeryPrimeField,
+use lambdaworks_math::{
+    field::{
+        element::FieldElement,
+        fields::fft_friendly::{
+            babybear::Babybear31PrimeField, stark_252_prime_field::Stark252PrimeField,
+            u64_goldilocks::U64GoldilocksPrimeField,
+            u64_mersenne_montgomery_field::Mersenne31MontgomeryPrimeField,
+        },
+        fields::pallas_field::Pallas255PrimeField,
+        traits::IsPrimeField,
+    },
+    polynomial::Polynomial,
 };
+use std::collections::HashMap;
 
 use crate::{
-    fields::{export_symbols, import_symbols, FieldType},
     interpreter::Polenta,
-    utils::PolentaUtilExt,
+    utils::{repr_to_decimal, repr_to_hex, PolentaUtilExt},
     PolentaError,
 };
 
-/// A type-erased Polenta interpreter that can switch between concrete field types at runtime.
-pub enum PolentaInstance {
-    Babybear31(Polenta<Babybear31PrimeField>),
-    Goldilocks(Polenta<U64GoldilocksPrimeField>),
-    Stark252(Polenta<Stark252PrimeField>),
-    Mersenne31(Polenta<Mersenne31MontgomeryPrimeField>),
+/// Field-agnostic surface of a Polenta interpreter.
+///
+/// Every method returns types that do NOT mention `F`, so the trait is
+/// object-safe and we can hold any field behind `Box<dyn IsPolentaInstance>`.
+pub trait IsPolentaInstance {
+    /// Modulus of the underlying prime field, as a decimal string.
+    fn modulus(&self) -> String;
+
+    /// Interpret the given input and return the result as a string.
+    fn interpret(&mut self, input: &str) -> Result<String, PolentaError>;
+
+    /// Export symbol table as a vector of (identifier, polynomial) pairs, where the polynomial is represented as a vector of hex coefficient strings.
+    fn export(&self) -> Vec<(String, Vec<String>)>;
+
+    /// Import symbol table from a vector of (identifier, polynomial) pairs, where the polynomial is represented as a vector of hex coefficient strings.
+    fn import(&mut self, data: &[(String, Vec<String>)]);
+}
+
+impl<F: IsPrimeField + 'static> IsPolentaInstance for Polenta<F> {
+    fn modulus(&self) -> String {
+        let one = <F::RepresentativeType as From<u16>>::from(1u16);
+        let m = F::modulus_minus_one() + one;
+        repr_to_decimal(&format!("{}", m))
+    }
+
+    fn interpret(&mut self, input: &str) -> Result<String, PolentaError> {
+        let polys = Polenta::<F>::interpret(self, input)?;
+        Ok(Polenta::<F>::poly_print(polys.last().unwrap()))
+    }
+
+    fn export(&self) -> Vec<(String, Vec<String>)> {
+        export_symbols(&self.symbols)
+    }
+
+    fn import(&mut self, data: &[(String, Vec<String>)]) {
+        import_symbols(&mut self.symbols, data);
+    }
+}
+
+/// [Dyn-dispatched](https://doc.rust-lang.org/std/keyword.dyn.html) Polenta instance,
+/// tagged with its field's catalog name.
+pub struct PolentaInstance {
+    inner: Box<dyn IsPolentaInstance>,
+    name: &'static str,
 }
 
 impl PolentaInstance {
-    pub fn new(field_type: FieldType) -> Self {
-        match field_type {
-            FieldType::Babybear31 => PolentaInstance::Babybear31(Polenta::new()),
-            FieldType::Goldilocks => PolentaInstance::Goldilocks(Polenta::new()),
-            FieldType::Stark252 => PolentaInstance::Stark252(Polenta::new()),
-            FieldType::Mersenne31 => PolentaInstance::Mersenne31(Polenta::new()),
-        }
+    /// Catalog of supported fields, keyed by name.
+    ///
+    /// To add a new field, simply provide one more name & factory.
+    #[rustfmt::skip]
+    pub const fn supported_fields() -> &'static [(&'static str, fn() -> Box<dyn IsPolentaInstance>)] {
+      &[
+          // top one is treated as the default field
+          ("babybear31", || {Box::new(Polenta::<Babybear31PrimeField>::new())}),
+          ("goldilocks", || {Box::new(Polenta::<U64GoldilocksPrimeField>::new())}),
+          ("stark252",   || {Box::new(Polenta::<Stark252PrimeField>::new())}),
+          ("mersenne31", || {Box::new(Polenta::<Mersenne31MontgomeryPrimeField>::new())}),
+          ("pallas255",  || {Box::new(Polenta::<Pallas255PrimeField>::new())}),
+      ]
     }
 
-    pub fn field_type(&self) -> FieldType {
-        match self {
-            PolentaInstance::Babybear31(_) => FieldType::Babybear31,
-            PolentaInstance::Goldilocks(_) => FieldType::Goldilocks,
-            PolentaInstance::Stark252(_) => FieldType::Stark252,
-            PolentaInstance::Mersenne31(_) => FieldType::Mersenne31,
-        }
+    /// Names of all supported fields, in catalog order.
+    pub fn supported_field_names() -> Vec<&'static str> {
+        Self::supported_fields().iter().map(|(n, _)| *n).collect()
+    }
+
+    /// Construct an instance by name (case-insensitive).
+    pub fn new_from_name(name: &str) -> Option<PolentaInstance> {
+        let needle = name.trim().to_lowercase();
+        Self::supported_fields()
+            .iter()
+            .find(|(n, _)| *n == needle)
+            .map(|(n, f)| PolentaInstance {
+                inner: f(),
+                name: n,
+            })
+    }
+
+    pub fn name(&self) -> &'static str {
+        self.name
+    }
+
+    pub fn modulus(&self) -> String {
+        self.inner.modulus()
     }
 
     pub fn interpret(&mut self, input: &str) -> Result<String, PolentaError> {
-        match self {
-            PolentaInstance::Babybear31(p) => {
-                let polys = p.interpret(input)?;
-                Ok(Polenta::<Babybear31PrimeField>::poly_print(
-                    polys.last().unwrap(),
-                ))
-            }
-            PolentaInstance::Goldilocks(p) => {
-                let polys = p.interpret(input)?;
-                Ok(Polenta::<U64GoldilocksPrimeField>::poly_print(
-                    polys.last().unwrap(),
-                ))
-            }
-            PolentaInstance::Stark252(p) => {
-                let polys = p.interpret(input)?;
-                Ok(Polenta::<Stark252PrimeField>::poly_print(
-                    polys.last().unwrap(),
-                ))
-            }
-            PolentaInstance::Mersenne31(p) => {
-                let polys = p.interpret(input)?;
-                Ok(Polenta::<Mersenne31MontgomeryPrimeField>::poly_print(
-                    polys.last().unwrap(),
-                ))
-            }
-        }
+        self.inner.interpret(input)
     }
 
-    /// Migrate symbols from another instance by converting coefficients via hex.
-    /// `from_hex` on the target field auto-reduces mod p, so this works for any field pair.
     pub fn migrate_symbols_from(&mut self, other: &PolentaInstance) {
-        let exported = match other {
-            PolentaInstance::Babybear31(p) => export_symbols(&p.symbols),
-            PolentaInstance::Goldilocks(p) => export_symbols(&p.symbols),
-            PolentaInstance::Stark252(p) => export_symbols(&p.symbols),
-            PolentaInstance::Mersenne31(p) => export_symbols(&p.symbols),
-        };
-        match self {
-            PolentaInstance::Babybear31(p) => import_symbols(&mut p.symbols, &exported),
-            PolentaInstance::Goldilocks(p) => import_symbols(&mut p.symbols, &exported),
-            PolentaInstance::Stark252(p) => import_symbols(&mut p.symbols, &exported),
-            PolentaInstance::Mersenne31(p) => import_symbols(&mut p.symbols, &exported),
+        let data = other.inner.export();
+        self.inner.import(&data);
+    }
+}
+
+impl Default for PolentaInstance {
+    fn default() -> Self {
+        let (name, factory) = Self::supported_fields()[0];
+        Self {
+            inner: factory(),
+            name,
         }
+    }
+}
+
+/// Export symbols as (name, hex coefficient strings) pairs.
+/// Always normalizes to unprefixed hex so `from_hex` can parse on import.
+pub fn export_symbols<F: IsPrimeField>(
+    symbols: &HashMap<String, Polynomial<FieldElement<F>>>,
+) -> Vec<(String, Vec<String>)> {
+    symbols
+        .iter()
+        .map(|(name, poly)| {
+            let hex_coeffs = poly
+                .coefficients()
+                .iter()
+                .map(|c| repr_to_hex(&format!("{}", c.representative())))
+                .collect();
+            (name.clone(), hex_coeffs)
+        })
+        .collect()
+}
+
+/// Import symbols from hex coefficient strings, reducing mod p automatically via `from_hex`.
+pub fn import_symbols<F: IsPrimeField>(
+    symbols: &mut HashMap<String, Polynomial<FieldElement<F>>>,
+    data: &[(String, Vec<String>)],
+) {
+    for (name, hex_coeffs) in data {
+        let coeffs: Vec<FieldElement<F>> = hex_coeffs
+            .iter()
+            .filter_map(|h| FieldElement::<F>::from_hex(h).ok())
+            .collect();
+        symbols.insert(name.clone(), Polynomial::new(&coeffs));
     }
 }
