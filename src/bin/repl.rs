@@ -1,6 +1,6 @@
 use colored::Colorize;
 use miette::{IntoDiagnostic, Report, Result};
-use polenta::{FieldType, PolentaInstance};
+use polenta::PolentaInstance;
 use rustyline::error::ReadlineError;
 use rustyline::DefaultEditor;
 
@@ -30,31 +30,33 @@ fn main() -> Result<()> {
         CMD_EXIT.yellow(),
         CMD_HELP.yellow()
     );
-    let mut polenta = PolentaInstance::new(FieldType::Babybear31);
+    let mut polenta = PolentaInstance::default();
     let mut rl = DefaultEditor::new().into_diagnostic()?;
 
     let prompt_line = format!("{}", "> ".green());
     loop {
         match rl.readline(&prompt_line) {
             Ok(line) => match line.as_str() {
-                "" => {
-                    // do nothing
-                }
+                "" => {}
                 CMD_HELP => {
                     let _ = rl.add_history_entry(CMD_HELP);
 
                     println!("Polenta is a simple language for polynomial manipulation.");
-                    println!("{:<12}show this help message", CMD_HELP.yellow());
-                    println!("{:<12}exit the program", CMD_EXIT.yellow());
-                    println!("{:<12}reset symbols", CMD_RESET.yellow());
-                    println!("{:<12}show current field or switch field", "field".yellow());
+                    println!("{:<14}show this help message", CMD_HELP.yellow());
+                    println!("{:<14}exit the program", CMD_EXIT.yellow());
+                    println!("{:<14}reset symbols", CMD_RESET.yellow());
+                    println!(
+                        "{:<14}show current field or switch by name",
+                        CMD_FIELD.yellow()
+                    );
                 }
                 CMD_EXIT => {
                     println!("bye!");
                     break;
                 }
                 CMD_RESET => {
-                    polenta = PolentaInstance::new(polenta.field_type());
+                    polenta = PolentaInstance::new_from_name(polenta.name())
+                        .expect("current field must be in catalog");
                     println!("Symbol table reset.");
                 }
                 line if line.starts_with(CMD_FIELD) => {
@@ -62,64 +64,61 @@ fn main() -> Result<()> {
                     let parts: Vec<&str> = line.split_whitespace().collect();
 
                     if parts.len() == 1 {
-                        // show current field and available fields
-                        let current = polenta.field_type();
+                        let current = polenta.name();
                         println!(
-                            "Current field: {} (order: {})",
-                            current.name().yellow(),
-                            current.order()
+                            "Current field: {} (modulus: {})",
+                            current.yellow(),
+                            polenta.modulus()
                         );
                         println!("Available fields:");
-                        for field_type in FieldType::all() {
-                            let marker = if *field_type == current { "*" } else { " " };
-                            println!("  {}{}", marker, field_type.name().blue());
+                        for (name, factory) in PolentaInstance::supported_fields() {
+                            let marker = if *name == current { "*" } else { " " };
+                            println!(
+                                "  {} {} (modulus: {})",
+                                marker,
+                                name.blue(),
+                                factory().modulus()
+                            );
                         }
                         println!("Use {} to switch fields.", "field <name>".yellow());
                     } else if parts.len() == 2 {
-                        // switch to the specified field
-                        let field_name = parts[1];
-                        match FieldType::from_name(field_name) {
-                            Some(new_field_type) => {
-                                if new_field_type == polenta.field_type() {
-                                    println!(
-                                        "Already using {} field.",
-                                        new_field_type.name().yellow()
-                                    );
-                                } else {
-                                    let new_polenta = PolentaInstance::new(new_field_type);
+                        let target = parts[1];
+                        if target.eq_ignore_ascii_case(polenta.name()) {
+                            println!("Already using {} field.", polenta.name().yellow());
+                        } else {
+                            match PolentaInstance::new_from_name(target) {
+                                Some(new_polenta) => {
                                     let old_polenta = std::mem::replace(&mut polenta, new_polenta);
                                     polenta.migrate_symbols_from(&old_polenta);
                                     println!(
-                                        "Switched to {} field (order: {}). Symbol table migrated.",
-                                        new_field_type.name().yellow(),
-                                        new_field_type.order()
+                                        "Switched to {} field (modulus: {}). Symbol table migrated.",
+                                        polenta.name().yellow(),
+                                        polenta.modulus()
+                                    );
+                                }
+                                None => {
+                                    println!(
+                                        "Unknown field: {}. Available fields: {}",
+                                        target.red(),
+                                        PolentaInstance::supported_field_names().join(", ")
                                     );
                                 }
                             }
-                            None => {
-                                println!(
-                                    "Unknown field: {}. Available fields: {}",
-                                    field_name.red(),
-                                    FieldType::all()
-                                        .iter()
-                                        .map(|f| f.name())
-                                        .collect::<Vec<_>>()
-                                        .join(", ")
-                                );
-                            }
                         }
                     } else {
-                        println!("Usage: {} or {}", "field".yellow(), "field <name>".yellow());
+                        println!(
+                            "Usage: {} or {}",
+                            CMD_FIELD.yellow(),
+                            "field <name>".yellow()
+                        );
                     }
                 }
 
                 _ => {
-                    // add ; to the input
                     let line_sanitized = format!("{};", line);
                     let input = line_sanitized.as_str();
                     let _ = rl.add_history_entry(input);
 
-                    // process input
                     match polenta.interpret(input) {
                         Ok(result) => {
                             println!("{}", result.blue());
